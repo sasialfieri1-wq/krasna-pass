@@ -5,10 +5,13 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Krasna Pass 1840 - Ispettore di Confine</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { theme: { screens: { sm: '1px', md: '1px', lg: '1px', xl: '1px', '2xl': '1px' } } };</script>
     <!-- Google Retro Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,6 +37,23 @@
                  0 2px 4px rgba(0,0,0,0.95);
         }
 
+        html { background: #0a0c0d; overflow: hidden; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        #boothDropZone { flex-shrink: 0; }
+        /* Modo compatto (telefono / finestra piccola): la garitta col viaggiatore deve restare visibile */
+        body.compact main > section.h-44 { height: 124px; }
+        body.compact #boothDropZone { height: 172px; }
+        body.compact #boothDropZone + div { margin-top: 6px; margin-bottom: 6px; padding: 6px; }
+        body.compact #dialogueText { padding: 6px 8px; font-size: 13px; line-height: 1.25; }
+        body.compact #actionButtons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        body.compact #actionButtons > * { margin: 0; }
+        body.compact #actionButtons button { padding-top: 6px; padding-bottom: 6px; font-size: 20px; }
+        body.scaled { position: fixed; left: 0; top: 0; transform-origin: 0 0; }
+        #rotateOverlay { display: none; position: fixed; inset: 0; z-index: 2147483647; background: #0a0c0d; color: #fbbf24; font-family: 'VT323', monospace; font-size: 28px; text-align: center; align-items: center; justify-content: center; flex-direction: column; padding: 24px; line-height: 1.2; }
+        #rotateOverlay .rot-icon { font-size: 64px; display: inline-block; animation: rotHint 2s ease-in-out infinite; }
+        @keyframes rotHint { 0%,30% { transform: rotate(0); } 60%,100% { transform: rotate(-90deg); } }
+        @media (orientation: portrait) and (max-width: 1100px) { #rotateOverlay { display: flex; } }
+        #rotateOverlay.off { display: none !important; }
+        #rotateOverlay button { margin-top: 28px; font-family: 'VT323', monospace; font-size: 22px; color: #a8a29e; background: transparent; border: 2px solid #57534e; border-radius: 6px; padding: 6px 16px; cursor: pointer; }
         body {
             background-color: var(--color-bg-dark);
             user-select: none;
@@ -181,6 +201,7 @@
 <body class="h-screen w-screen flex flex-col justify-between bg-stone-950 text-stone-100 overflow-hidden relative font-typewriter">
 
     <div class="crt-overlay fixed inset-0 z-50"></div>
+    <div id="rotateOverlay"><div class="rot-icon">📱</div><div>RUOTA IL DISPOSITIVO<br>IN ORIZZONTALE</div><button type="button" id="rotateDismiss">CONTINUA LO STESSO</button></div>
 
     <!-- TOP HEADER BAR -->
     <header class="bg-stone-950 border-b-2 border-stone-800 px-4 py-2 flex justify-between items-center z-40 shrink-0">
@@ -356,7 +377,7 @@
                 </div>
 
                 <!-- Pulsanti Avanti / Arresta -->
-                <div class="space-y-2">
+                <div id="actionButtons" class="space-y-2">
                     <button id="mainActionButton" class="w-full btn-soviet-green text-white font-pixel text-2xl tracking-widest py-3 px-2 rounded-lg transition transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center space-x-1 cursor-pointer text-outline-dark">
                         <span id="mainActionText">🪪 AVANTI IL PROSSIMO</span>
                     </button>
@@ -1271,7 +1292,14 @@
             el: null,
             init() {
                 if (this.el) return;
-                this.el = new Audio('assets/audio/soundtrack.mp3');
+                let src = 'assets/audio/soundtrack.mp3';
+                try {
+                    const raw = atob(document.getElementById('musicData').textContent.trim());
+                    const buf = new Uint8Array(raw.length);
+                    for (let i = 0; i < raw.length; i++) buf[i] = raw.charCodeAt(i);
+                    src = URL.createObjectURL(new Blob([buf], { type: 'audio/mpeg' }));
+                } catch (e) {}
+                this.el = new Audio(src);
                 this.el.loop = true;
                 this.el.volume = audioSettings.musicLevel();
                 this.el.preload = 'auto';
@@ -1622,6 +1650,7 @@
             }
             resizeCanvases();
             window.addEventListener('resize', resizeCanvases);
+            window.addEventListener('resize-game', resizeCanvases);
 
             function drawGuardFacingLeftHorizontal(ctx, x, y, walkPhase = 0) {
                 ctx.save();
@@ -1932,6 +1961,7 @@
             }
             resizeSky();
             window.addEventListener('resize', resizeSky);
+            window.addEventListener('resize-game', resizeSky);
 
             snowParticles = [];
             for (let i = 0; i < 35; i++) {
@@ -1983,6 +2013,42 @@
             renderSky();
         }
 
+
+        // ===== Adattamento a telefono / tablet / desktop =====
+        // L'interfaccia ha una dimensione di progetto (1100x620). Si scala per entrare nello schermo e,
+        // sui formati troppo "quadrati" o verticali (iPad), si centra con bande nere invece di deformarsi.
+        (function setupMobileScale() {
+            const DW = 1100, DH = 620, MINA = 1.35;
+            const ov = document.getElementById('rotateOverlay');
+            if (ov) { document.documentElement.appendChild(ov); const d = document.getElementById('rotateDismiss'); if (d) d.addEventListener('click', () => ov.classList.add('off')); }
+            function fit() {
+                const sw = window.innerWidth, sh = window.innerHeight;
+                const hd = Math.min(sh, sw / MINA);                 // altezza utile (proporzione minima 1.35:1)
+                const k = Math.min(1, sw / DW, hd / DH);
+                const top = Math.max(0, Math.round((sh - hd) / 2));
+                window.__uiScale = k;
+                const b = document.body;
+                if (k >= 1 && top === 0) { b.classList.remove('scaled'); b.style.width = b.style.height = b.style.transform = ''; }
+                else {
+                    b.classList.add('scaled');
+                    b.style.width = Math.ceil(sw / k) + 'px'; b.style.height = Math.ceil(hd / k) + 'px';
+                    b.style.transform = `translate(0px, ${top}px) scale(${k})`;
+                }
+                b.classList.toggle('compact', hd / k < 760);
+                if (ov && sw > sh) ov.classList.remove('off');
+                window.dispatchEvent(new Event('resize-game'));
+            }
+            fit();
+            window.addEventListener('resize', fit);
+            window.addEventListener('orientationchange', () => setTimeout(fit, 250));
+            // l'audio su iOS/Android parte solo dopo un gesto dell'utente
+            const unlock = () => { try { sounds.init(); if (sounds.ctx && sounds.ctx.state === 'suspended') sounds.ctx.resume(); } catch (_) {} };
+            ['pointerdown', 'touchend', 'click'].forEach(ev => document.addEventListener(ev, unlock, { passive: true }));
+            // fullscreen non supportato su iPhone: nascondi il pulsante
+            const fsBtn = document.getElementById('fullscreenToggle');
+            if (fsBtn && !document.documentElement.requestFullscreen) fsBtn.style.display = 'none';
+        })();
+
         let topZIndex = 99999999;
 
         function setupDraggables() {
@@ -1993,64 +2059,48 @@
                 let isDragging = false;
                 let startX, startY, initialLeft, initialTop;
 
-                item.addEventListener('mousedown', (e) => {
-                    isDragging = true;
-                    startX = e.clientX;
-                    startY = e.clientY;
-                    initialLeft = item.offsetLeft;
-                    initialTop = item.offsetTop;
-                    topZIndex += 10;
-                    item.style.zIndex = topZIndex;
+                let activeId = null;
+                const hit = (r, x, y) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+
+                item.addEventListener('pointerdown', (e) => {
+                    if (e.pointerType === 'mouse' && e.button !== 0) return;
+                    isDragging = true; activeId = e.pointerId;
+                    startX = e.clientX; startY = e.clientY;
+                    initialLeft = item.offsetLeft; initialTop = item.offsetTop;
+                    topZIndex += 10; item.style.zIndex = topZIndex;
                     item.classList.add('shadow-2xl', 'ring-2', 'ring-amber-500/50');
+                    try { item.setPointerCapture(e.pointerId); } catch (_) {}
                     e.preventDefault();
                 });
 
-                window.addEventListener('mousemove', (e) => {
-                    if (!isDragging) return;
-                    const dx = e.clientX - startX;
-                    const dy = e.clientY - startY;
-                    item.style.left = `${initialLeft + dx}px`;
-                    item.style.top = `${initialTop + dy}px`;
-
+                window.addEventListener('pointermove', (e) => {
+                    if (!isDragging || e.pointerId !== activeId) return;
+                    const k = window.__uiScale || 1;
+                    item.style.left = `${initialLeft + (e.clientX - startX) / k}px`;
+                    item.style.top = `${initialTop + (e.clientY - startY) / k}px`;
                     if ((item === DOM.passportDoc || item === DOM.permitDoc) && GAME_STATE.currentTraveler) {
-                        const boothRect = DOM.boothDropZone.getBoundingClientRect();
-                        if (e.clientX >= boothRect.left && e.clientX <= boothRect.right &&
-                            e.clientY >= boothRect.top && e.clientY <= boothRect.bottom) {
-                            DOM.dropHighlight.classList.remove('hidden');
-                        } else {
-                            DOM.dropHighlight.classList.add('hidden');
-                        }
+                        if (hit(DOM.boothDropZone.getBoundingClientRect(), e.clientX, e.clientY)) DOM.dropHighlight.classList.remove('hidden');
+                        else DOM.dropHighlight.classList.add('hidden');
                     }
                 });
 
-                window.addEventListener('mouseup', (e) => {
-                    if (!isDragging) return;
-                    isDragging = false;
+                const endDrag = (e, cancelled) => {
+                    if (!isDragging || e.pointerId !== activeId) return;
+                    isDragging = false; activeId = null;
                     item.classList.remove('ring-2', 'ring-amber-500/50');
                     DOM.dropHighlight.classList.add('hidden');
-
+                    if (cancelled) return;
                     if (item === DOM.stampApproveBtn || item === DOM.stampDenyBtn) {
                         const stampType = item === DOM.stampApproveBtn ? 'APPROVED' : 'DENIED';
-                        const passRect = DOM.passportStampSlot.getBoundingClientRect();
-                        const permitRect = DOM.permitStampSlot.getBoundingClientRect();
-
-                        if (e.clientX >= passRect.left && e.clientX <= passRect.right &&
-                            e.clientY >= passRect.top && e.clientY <= passRect.bottom) {
-                            applyStamp(stampType);
-                        } else if (e.clientX >= permitRect.left && e.clientX <= permitRect.right &&
-                            e.clientY >= permitRect.top && e.clientY <= permitRect.bottom) {
-                            applyStamp(stampType);
-                        }
+                        if (hit(DOM.passportStampSlot.getBoundingClientRect(), e.clientX, e.clientY) ||
+                            hit(DOM.permitStampSlot.getBoundingClientRect(), e.clientX, e.clientY)) applyStamp(stampType);
                     }
-
                     if ((item === DOM.passportDoc || item === DOM.permitDoc) && GAME_STATE.currentTraveler) {
-                        const boothRect = DOM.boothDropZone.getBoundingClientRect();
-                        if (e.clientX >= boothRect.left && e.clientX <= boothRect.right &&
-                            e.clientY >= boothRect.top && e.clientY <= boothRect.bottom) {
-                            processDecision();
-                        }
+                        if (hit(DOM.boothDropZone.getBoundingClientRect(), e.clientX, e.clientY)) processDecision();
                     }
-                });
+                };
+                window.addEventListener('pointerup', (e) => endDrag(e, false));
+                window.addEventListener('pointercancel', (e) => endDrag(e, true));
             });
         }
 
@@ -2982,7 +3032,7 @@
         function bindEvents() {
             if (DOM.fullscreenToggle) {
                 DOM.fullscreenToggle.addEventListener('click', () => {
-                    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                    if (!document.fullscreenElement) { const r = document.documentElement.requestFullscreen(); if (r && r.then) r.then(() => { try { screen.orientation.lock('landscape'); } catch (_) {} }).catch(() => {}); }
                     else document.exitFullscreen();
                 });
             }
