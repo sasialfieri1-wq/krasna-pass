@@ -6,6 +6,30 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="game-version" content="4.2.0">
+    <script>
+    // Bootstrap aggiornamenti (solo app desktop NW.js): se esiste una versione piu' recente scaricata, la usa al posto di questa.
+    (function () {
+        if (window.__krasnaOverride || typeof nw === 'undefined') return;
+        try {
+            var req = window.require || nw.require;
+            var fs = req('fs'), path = req('path');
+            var dir = path.join(nw.App.dataPath, 'game_update');
+            var meta = JSON.parse(fs.readFileSync(path.join(dir, 'meta.json'), 'utf8'));
+            var mine = document.querySelector('meta[name="game-version"]').content;
+            var a = String(meta.version).split('.').map(Number), b = String(mine).split('.').map(Number), newer = false;
+            for (var i = 0; i < Math.max(a.length, b.length); i++) {
+                var d = (a[i] || 0) - (b[i] || 0);
+                if (d) { newer = d > 0; break; }
+            }
+            if (!newer) return;
+            var html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
+            if (!html || html.length < 50000) return;
+            window.__krasnaOverride = true;
+            document.open(); document.write(html); document.close();
+        } catch (e) {}
+    })();
+    </script>
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Krasna Pass 1840 - Ispettore di Confine</title>
@@ -237,6 +261,17 @@
     </header>
 
 
+
+
+    <!-- BANNER AGGIORNAMENTO (solo app desktop) -->
+    <div id="updateBanner" class="fixed top-3 left-1/2 -translate-x-1/2 z-[1000000001] hidden w-[92%] max-w-md bg-stone-900 border-4 border-emerald-600 rounded-xl shadow-2xl p-4 text-center space-y-2">
+        <div id="updateTitle" class="font-pixel text-2xl text-emerald-400 font-bold">🔔 AGGIORNAMENTO DISPONIBILE</div>
+        <div id="updateInfo" class="text-xs font-typewriter text-stone-300 leading-snug"></div>
+        <div class="flex gap-2 pt-1">
+            <button id="updateLaterBtn" type="button" class="flex-1 bg-stone-800 hover:bg-stone-700 text-stone-300 font-pixel text-xl py-1.5 rounded border-2 border-stone-600 cursor-pointer transition">DOPO</button>
+            <button id="updateNowBtn" type="button" class="flex-1 bg-emerald-800 hover:bg-emerald-700 text-emerald-100 font-pixel text-xl py-1.5 rounded border-2 border-emerald-500 cursor-pointer transition">⬇ SCARICA</button>
+        </div>
+    </div>
 
     <!-- TUTORIAL -->
     <div id="tutorialModal" class="fixed inset-0 z-[1000000] bg-stone-950/90 flex items-center justify-center p-4 hidden">
@@ -601,7 +636,7 @@
             </div>
 
             <div class="text-[10px] text-stone-500 font-typewriter tracking-wider">
-                GLORIA ALLA REPUBBLICA DI NOVOGRAD • v4.0 EVENTI & VOLTI
+                GLORIA ALLA REPUBBLICA DI NOVOGRAD • v<span id="versionTag">4.2.0</span>
             </div>
         </div>
     </div>
@@ -2035,6 +2070,116 @@
         }
 
 
+        // ===== Aggiornamenti dell'app desktop (NW.js) =====
+        const GAME_VERSION = (document.querySelector('meta[name="game-version"]') || {}).content || '0.0.0';
+        (function setupUpdater() {
+            const tag = document.getElementById('versionTag');
+            if (tag) tag.textContent = GAME_VERSION;
+            if (typeof nw === 'undefined') return;   // il browser si aggiorna da solo: serve solo nell'app
+            let https, fs, path;
+            try {
+                const req = window.require || nw.require;
+                https = req('https'); fs = req('fs'); path = req('path');
+            } catch (e) { return; }
+
+            const INFO_URL = 'https://sasialfieri1-wq.github.io/krasna-pass/version.json';
+            const banner = gid('updateBanner'), titleEl = gid('updateTitle'), infoEl = gid('updateInfo');
+            const nowBtn = gid('updateNowBtn'), laterBtn = gid('updateLaterBtn');
+            let pending = null, dismissed = false, stage = 'available';
+
+            const cmp = (a, b) => {
+                const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number);
+                for (let i = 0; i < Math.max(x.length, y.length); i++) {
+                    const d = (x[i] || 0) - (y[i] || 0);
+                    if (d) return d > 0 ? 1 : -1;
+                }
+                return 0;
+            };
+
+            function fetchText(url, cb, hops) {
+                hops = hops || 0;
+                let done = false;
+                const finish = (err, data) => { if (!done) { done = true; cb(err, data); } };
+                try {
+                    const u = url + (url.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now();
+                    const r = https.get(u, { headers: { 'Cache-Control': 'no-cache' } }, res => {
+                        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location && hops < 4) {
+                            res.resume();
+                            done = true;
+                            return fetchText(new URL(res.headers.location, url).href, cb, hops + 1);
+                        }
+                        if (res.statusCode !== 200) { res.resume(); return finish(new Error('HTTP ' + res.statusCode)); }
+                        res.setEncoding('utf8');
+                        let data = '';
+                        res.on('data', c => { data += c; });
+                        res.on('end', () => finish(null, data));
+                    });
+                    r.setTimeout(15000, () => r.destroy(new Error('timeout')));
+                    r.on('error', e => finish(e));
+                } catch (e) { finish(e); }
+            }
+
+            function render() {
+                const menuVisible = !DOM.mainMenuScreen.classList.contains('hidden');
+                if (!pending || dismissed || !menuVisible) { banner.classList.add('hidden'); return; }
+                banner.classList.remove('hidden');
+                nowBtn.disabled = false;
+                if (stage === 'available') {
+                    titleEl.textContent = '🔔 AGGIORNAMENTO DISPONIBILE';
+                    infoEl.textContent = `Nuova versione ${pending.version} (la tua è la ${GAME_VERSION}).` + (pending.notes ? ' ' + pending.notes : '');
+                    nowBtn.textContent = '⬇ SCARICA';
+                } else if (stage === 'downloading') {
+                    titleEl.textContent = '⏳ DOWNLOAD IN CORSO';
+                    infoEl.textContent = 'Scarico la versione ' + pending.version + '...';
+                    nowBtn.textContent = '...';
+                    nowBtn.disabled = true;
+                } else if (stage === 'ready') {
+                    titleEl.textContent = '✔ AGGIORNAMENTO PRONTO';
+                    infoEl.textContent = 'Versione ' + pending.version + ' scaricata. Riavvia il gioco per applicarla.';
+                    nowBtn.textContent = '↻ RIAVVIA ORA';
+                } else {
+                    titleEl.textContent = '⚠ DOWNLOAD NON RIUSCITO';
+                    infoEl.textContent = 'Controlla la connessione e riprova.';
+                    nowBtn.textContent = '↻ RIPROVA';
+                }
+            }
+            window.__updateBannerRefresh = render;
+
+            nowBtn.onclick = () => {
+                if (stage === 'ready') { location.reload(); return; }
+                if (stage === 'downloading') return;
+                stage = 'downloading';
+                render();
+                fetchText(pending.url, (err, html) => {
+                    const ok = !err && html && html.length > 50000 &&
+                        html.indexOf('name="game-version" content="' + pending.version + '"') >= 0;
+                    if (!ok) { stage = 'error'; render(); return; }
+                    try {
+                        const dir = path.join(nw.App.dataPath, 'game_update');
+                        fs.mkdirSync(dir, { recursive: true });
+                        fs.writeFileSync(path.join(dir, 'index.html'), html, 'utf8');
+                        fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify({ version: pending.version }), 'utf8');
+                        stage = 'ready';
+                    } catch (e) { stage = 'error'; }
+                    render();
+                });
+            };
+            laterBtn.onclick = () => { dismissed = true; render(); };
+
+            setTimeout(() => {
+                fetchText(INFO_URL, (err, txt) => {
+                    if (err) return;
+                    try {
+                        const info = JSON.parse(txt);
+                        if (info && info.version && info.url && cmp(info.version, GAME_VERSION) > 0) {
+                            pending = info;
+                            render();
+                        }
+                    } catch (e) {}
+                });
+            }, 1500);
+        })();
+
         // ===== Adattamento a telefono / tablet / desktop =====
         // L'interfaccia ha una dimensione di progetto (1100x620). Si scala per entrare nello schermo e,
         // sui formati troppo "quadrati" o verticali (iPad), si centra con bande nere invece di deformarsi.
@@ -2966,6 +3111,7 @@
         ];
 
         function updateMenuButtons() {
+            if (window.__updateBannerRefresh) window.__updateBannerRefresh();
             const saved = loadGameData();
             const hasSave = !!(saved && saved.day);
             DOM.menuContinueBtn.disabled = !hasSave;
