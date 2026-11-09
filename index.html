@@ -237,6 +237,24 @@
     </header>
 
 
+
+    <!-- TUTORIAL -->
+    <div id="tutorialModal" class="fixed inset-0 z-[1000000] bg-stone-950/90 flex items-center justify-center p-4 hidden">
+        <div class="w-full max-w-sm bg-stone-900 border-4 border-emerald-700 rounded-xl shadow-2xl p-5 text-center space-y-3">
+            <div class="flex items-center justify-between">
+                <span id="tutorialStep" class="text-xs font-bold text-stone-400 font-typewriter tracking-widest">1 / 4</span>
+                <button id="tutorialCloseBtn" type="button" class="hidden text-stone-200 bg-red-800 hover:bg-red-700 border border-red-400 font-bold text-sm px-3 py-1 rounded cursor-pointer transition">✕</button>
+            </div>
+            <div id="tutorialIcon" class="text-5xl">🪪</div>
+            <h2 id="tutorialTitle" class="font-pixel text-3xl text-emerald-400 font-bold uppercase tracking-wider">Controlla</h2>
+            <p id="tutorialText" class="text-sm font-typewriter text-stone-200 leading-relaxed min-h-[72px]"></p>
+            <div class="flex gap-2 pt-1">
+                <button id="tutorialPrevBtn" type="button" class="flex-1 bg-stone-800 hover:bg-stone-700 text-stone-300 font-pixel text-xl py-2 rounded border-2 border-stone-600 cursor-pointer transition">◀ INDIETRO</button>
+                <button id="tutorialNextBtn" type="button" class="flex-1 bg-emerald-800 hover:bg-emerald-700 text-emerald-100 font-pixel text-xl py-2 rounded border-2 border-emerald-500 cursor-pointer transition">AVANTI ▶</button>
+            </div>
+        </div>
+    </div>
+
     <!-- PANNELLO VOLUMI -->
     <div id="volumePanel" class="fixed inset-0 z-[1000000000] bg-stone-950/70 flex items-center justify-center p-4 hidden">
         <div class="w-full max-w-sm bg-stone-900 border-4 border-amber-700 rounded-xl shadow-2xl p-5 space-y-4">
@@ -570,6 +588,9 @@
                 </button>
                 <button id="menuContinueBtn" class="w-full bg-amber-800 hover:bg-amber-700 active:bg-amber-900 text-amber-100 font-pixel text-2xl py-3 rounded border-2 border-amber-600 shadow-xl transition transform hover:scale-[1.02] cursor-pointer">
                     📁 CONTINUA PARTITA
+                </button>
+                <button id="menuTutorialBtn" type="button" class="w-full bg-stone-800 hover:bg-stone-700 text-emerald-300 font-pixel text-2xl py-3 rounded border-2 border-emerald-700 transition cursor-pointer">
+                    📘 TUTORIAL
                 </button>
                 <button id="menuVolumeBtn" type="button" class="w-full bg-stone-800 hover:bg-stone-700 text-amber-300 font-pixel text-2xl py-3 rounded border-2 border-amber-700 transition cursor-pointer">
                     🔊 VOLUMI
@@ -2926,6 +2947,24 @@
             return null;
         }
 
+        // ---------- TUTORIAL (obbligatorio la prima volta) ----------
+        const TUTORIAL_KEY = 'krasna_pass_tutorial_done';
+        let tutorialDoneMemory = false; // ripiego se il browser blocca localStorage
+        function tutorialDone() {
+            try { if (localStorage.getItem(TUTORIAL_KEY) === '1') return true; } catch (e) {}
+            return tutorialDoneMemory;
+        }
+        function markTutorialDone() {
+            tutorialDoneMemory = true;
+            try { localStorage.setItem(TUTORIAL_KEY, '1'); } catch (e) {}
+        }
+        const TUTORIAL_STEPS = [
+            { icon: '🪪', title: 'Controlla', text: 'Premi <b>AVANTI IL PROSSIMO</b>. Confronta passaporto, permesso e bagagli con il <b>Manuale</b>. Puoi fare domande al viaggiatore.' },
+            { icon: '🔨', title: 'Decidi', text: 'Metti il timbro <b>APPROVATO</b> o <b>RESPINTO</b> (clicca il timbro o trascinalo sui documenti), poi premi <b>CONSEGNA DOCUMENTI</b>. Contrabbandieri e ricercati: <b>ARRESTA</b>.' },
+            { icon: '💸', title: 'Errori', text: 'Ogni errore è una multa, più cara a ogni multa del giorno. Gli arresti sbagliati costano di più.' },
+            { icon: '🏠', title: 'Famiglia', text: 'A fine giornata, con lo stipendio, paghi affitto, cibo, riscaldamento e le medicine se servono. Se li trascuri, la tua famiglia soffre. Le tue scelte decidono il finale.' }
+        ];
+
         function updateMenuButtons() {
             const saved = loadGameData();
             const hasSave = !!(saved && saved.day);
@@ -2938,6 +2977,22 @@
                 DOM.menuContinueBtn.style.opacity = '0.45';
                 DOM.menuContinueBtn.style.cursor = 'not-allowed';
                 DOM.menuContinueBtn.innerHTML = `📁 CONTINUA PARTITA (NESSUN SALVATAGGIO)`;
+            }
+
+            // Finché il tutorial non è completato, le partite sono bloccate
+            const done = tutorialDone();
+            const tBtn = document.getElementById('menuTutorialBtn');
+            if (tBtn) {
+                tBtn.innerHTML = done ? '📘 TUTORIAL' : '📘 TUTORIAL (OBBLIGATORIO)';
+                tBtn.classList.toggle('animate-pulse', !done);
+            }
+            if (!done) {
+                DOM.menuNewGameBtn.style.opacity = '0.45';
+                DOM.menuNewGameBtn.style.cursor = 'not-allowed';
+                if (hasSave) { DOM.menuContinueBtn.style.opacity = '0.45'; DOM.menuContinueBtn.style.cursor = 'not-allowed'; }
+            } else {
+                DOM.menuNewGameBtn.style.opacity = '1';
+                DOM.menuNewGameBtn.style.cursor = 'pointer';
             }
         }
 
@@ -3037,14 +3092,41 @@
                 });
             }
 
+            // Tutorial
+            const tutModal = gid('tutorialModal');
+            let tutIndex = 0;
+            const renderTutorial = () => {
+                const st = TUTORIAL_STEPS[tutIndex];
+                const last = tutIndex === TUTORIAL_STEPS.length - 1;
+                gid('tutorialStep').textContent = `${tutIndex + 1} / ${TUTORIAL_STEPS.length}`;
+                gid('tutorialIcon').textContent = st.icon;
+                gid('tutorialTitle').textContent = st.title;
+                gid('tutorialText').innerHTML = st.text;
+                gid('tutorialPrevBtn').style.visibility = tutIndex === 0 ? 'hidden' : 'visible';
+                gid('tutorialNextBtn').textContent = last ? 'HO CAPITO ✔' : 'AVANTI ▶';
+                // la X compare solo quando il tutorial è già stato completato (rivisione facoltativa)
+                gid('tutorialCloseBtn').classList.toggle('hidden', !tutorialDone());
+            };
+            const openTutorial = () => { tutIndex = 0; renderTutorial(); tutModal.classList.remove('hidden'); };
+            const closeTutorial = () => { tutModal.classList.add('hidden'); updateMenuButtons(); };
+            gid('menuTutorialBtn').onclick = openTutorial;
+            gid('tutorialPrevBtn').onclick = () => { if (tutIndex > 0) { tutIndex--; renderTutorial(); } };
+            gid('tutorialNextBtn').onclick = () => {
+                if (tutIndex < TUTORIAL_STEPS.length - 1) { tutIndex++; renderTutorial(); }
+                else { markTutorialDone(); closeTutorial(); }
+            };
+            gid('tutorialCloseBtn').onclick = () => { if (tutorialDone()) closeTutorial(); };
+
             DOM.menuNewGameBtn.onclick = function(e) {
                 e.preventDefault();
+                if (!tutorialDone()) { openTutorial(); return; }
                 if (sounds.enabled) music.play();
                 startNewGame();
             };
 
             DOM.menuContinueBtn.onclick = function(e) {
                 e.preventDefault();
+                if (!tutorialDone()) { openTutorial(); return; }
                 if (sounds.enabled) music.play();
                 continueGame();
             };
