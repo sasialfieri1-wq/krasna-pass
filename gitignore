@@ -1,0 +1,6 @@
+# Su GitHub vanno solo i file del gioco: tutto il resto (NW.js, exe, archivi) viene ignorato
+*
+!.gitignore
+!index.html
+!assets/
+!assets/**
