@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="game-version" content="4.4">
+    <meta name="game-version" content="4.4.1">
     <script>
     // Bootstrap aggiornamenti (solo app desktop NW.js): se esiste una versione piu' recente scaricata, la usa al posto di questa.
     (function () {
@@ -298,25 +298,31 @@
     </div>
 
     <!-- PANNELLO VOLUMI -->
-    <div id="volumePanel" class="fixed inset-0 z-[1000000000] bg-stone-950/70 flex items-center justify-center p-4 hidden">
-        <div class="w-full max-w-sm bg-stone-900 border-4 border-amber-700 rounded-xl shadow-2xl p-5 space-y-4">
-            <div class="flex items-center justify-between">
-                <h2 class="font-pixel text-3xl text-amber-400">🔊 VOLUMI</h2>
-                <button id="volumeCloseBtn" type="button" class="text-stone-200 hover:text-white bg-red-800 hover:bg-red-700 border border-red-400 font-bold text-sm px-3 py-1 rounded cursor-pointer transition">✕</button>
+    <div id="volumePanel" class="fixed inset-0 z-[1000000000] bg-stone-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="w-full max-w-md bg-stone-900 border-4 border-amber-600 rounded-xl shadow-2xl p-5 text-center space-y-3.5">
+            <div class="flex items-center justify-between border-b-2 border-stone-800 pb-2">
+                <span class="font-pixel text-amber-500 text-lg font-bold uppercase tracking-widest flex items-center gap-1.5">
+                    <span>★</span> IMPOSTAZIONI AUDIO
+                </span>
+                <button id="volumeCloseBtn" type="button" class="text-stone-300 hover:text-white bg-red-950 hover:bg-red-900 border border-red-700 font-pixel text-base px-2.5 py-0.5 rounded cursor-pointer transition">✕ CHIUDI</button>
             </div>
-            <div class="space-y-1">
-                <div class="flex justify-between text-xs font-bold text-stone-300 uppercase tracking-wider"><span>Generale</span><span id="volMasterVal">100%</span></div>
-                <input id="volMaster" type="range" min="0" max="100" step="1" value="100" class="w-full accent-amber-500 cursor-pointer">
+            
+            <div class="bg-stone-950 border-2 border-stone-800 rounded-lg p-4 space-y-3 text-left shadow-inner">
+                <div class="space-y-1">
+                    <div class="flex justify-between font-pixel text-xl text-amber-300 uppercase tracking-wider"><span>VOLUME GENERALE</span><span id="volMasterVal" class="text-stone-100 font-bold">100%</span></div>
+                    <input id="volMaster" type="range" min="0" max="100" step="1" value="100" class="w-full accent-amber-500 cursor-pointer">
+                </div>
+                <div class="space-y-1">
+                    <div class="flex justify-between font-pixel text-xl text-amber-300 uppercase tracking-wider"><span>MUSICA DI SOTTOFONDO</span><span id="volMusicVal" class="text-stone-100 font-bold">35%</span></div>
+                    <input id="volMusic" type="range" min="0" max="100" step="1" value="35" class="w-full accent-amber-500 cursor-pointer">
+                </div>
+                <div class="space-y-1">
+                    <div class="flex justify-between font-pixel text-xl text-amber-300 uppercase tracking-wider"><span>EFFETTI SONORI</span><span id="volSfxVal" class="text-stone-100 font-bold">100%</span></div>
+                    <input id="volSfx" type="range" min="0" max="100" step="1" value="100" class="w-full accent-amber-500 cursor-pointer">
+                </div>
             </div>
-            <div class="space-y-1">
-                <div class="flex justify-between text-xs font-bold text-stone-300 uppercase tracking-wider"><span>Musica</span><span id="volMusicVal">35%</span></div>
-                <input id="volMusic" type="range" min="0" max="100" step="1" value="35" class="w-full accent-amber-500 cursor-pointer">
-            </div>
-            <div class="space-y-1">
-                <div class="flex justify-between text-xs font-bold text-stone-300 uppercase tracking-wider"><span>Effetti sonori</span><span id="volSfxVal">100%</span></div>
-                <input id="volSfx" type="range" min="0" max="100" step="1" value="100" class="w-full accent-amber-500 cursor-pointer">
-            </div>
-            <button id="volumeDoneBtn" type="button" class="w-full bg-amber-800 hover:bg-amber-700 text-amber-100 font-pixel text-2xl py-2 rounded border-2 border-amber-600 cursor-pointer transition">OK</button>
+
+            <button id="volumeDoneBtn" type="button" class="w-full btn-soviet-green text-white font-pixel text-2xl py-2 rounded-lg border-2 border-emerald-500 shadow-xl transition transform hover:scale-[1.01] cursor-pointer text-outline-dark">CONFERMA E CHIUDI ✔</button>
         </div>
     </div>
 
@@ -610,44 +616,50 @@
 
     <!-- MAIN MENU SCREEN -->
     <div id="mainMenuScreen" class="fixed inset-0 z-[100000] bg-stone-950 flex flex-col items-center justify-center p-4 text-center overflow-y-auto">
-        <div class="max-w-sm w-full bg-stone-900 border-4 border-red-900 p-5 rounded-xl shadow-2xl flex flex-col items-center space-y-4 my-auto">
-            <div class="flex flex-col items-center justify-center">
-                <div class="w-16 h-16 mb-2 relative flex items-center justify-center">
-                    <svg class="w-full h-full drop-shadow-[0_0_15px_rgba(220,38,38,0.4)]" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="46" fill="#171717" stroke="#991b1b" stroke-width="4"/>
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="4 2"/>
-                        <polygon points="50,12 61,38 90,38 66,54 75,82 50,65 25,82 34,54 10,38 39,38" fill="#b91c1c" stroke="#f87171" stroke-width="1.5"/>
-                    </svg>
-                </div>
-                <h1 class="font-pixel text-4xl text-red-500 font-bold tracking-widest mb-1">KRASNA PASS 1840</h1>
-                <p class="text-xs text-amber-500 font-typewriter uppercase tracking-widest font-bold">ISPETTORE DI CONFINE • REPUBBLICA DI NOVOGRAD</p>
-                <div class="w-3/4 h-0.5 bg-red-900/60 my-2"></div>
+        <div class="max-w-md w-full bg-stone-900 border-4 border-amber-600 rounded-xl shadow-2xl p-5 flex flex-col items-center space-y-3.5 my-auto">
+            <div class="w-full flex items-center justify-between border-b-2 border-stone-800 pb-2">
+                <span class="font-pixel text-amber-500 text-lg font-bold uppercase tracking-widest flex items-center gap-1.5">
+                    <span>★</span> REPUBBLICA DI NOVOGRAD
+                </span>
+                <span class="font-pixel text-base font-bold text-amber-400 bg-stone-950 px-2.5 py-0.5 rounded border border-stone-700 tracking-wider">ANNO 1840</span>
             </div>
 
-            <div class="space-y-2 w-full">
-                <button id="menuNewGameBtn" class="w-full bg-red-900 hover:bg-red-800 active:bg-red-950 text-white font-pixel text-xl py-2.5 rounded border-2 border-red-600 shadow-xl transition transform hover:scale-[1.02] cursor-pointer">
+            <div class="flex flex-col items-center justify-center">
+                <div class="w-16 h-16 mb-1.5 relative flex items-center justify-center">
+                    <svg class="w-full h-full drop-shadow-[0_0_15px_rgba(245,158,11,0.35)]" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="46" fill="#171717" stroke="#991b1b" stroke-width="4"/>
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#d97706" stroke-width="2" stroke-dasharray="4 2"/>
+                        <polygon points="50,12 61,38 90,38 66,54 75,82 50,65 25,82 34,54 10,38 39,38" fill="#b91c1c" stroke="#fbbf24" stroke-width="1.5"/>
+                    </svg>
+                </div>
+                <h1 class="font-pixel text-4xl md:text-5xl text-amber-400 font-bold tracking-widest text-outline-dark uppercase">KRASNA PASS 1840</h1>
+                <p class="font-pixel text-sm text-amber-500 uppercase tracking-widest font-bold">ISPETTORE DI CONFINE • VALICO STATALE</p>
+            </div>
+
+            <div class="space-y-2.5 w-full">
+                <button id="menuNewGameBtn" class="w-full btn-soviet-green text-white font-pixel text-2xl py-3 rounded-lg border-2 border-emerald-400 shadow-xl transition transform hover:scale-[1.01] cursor-pointer text-outline-dark uppercase">
                     ★ INIZIA NUOVA CAMPAGNA (20 GIORNI)
                 </button>
-                <button id="menuContinueBtn" class="w-full bg-amber-800 hover:bg-amber-700 active:bg-amber-900 text-amber-100 font-pixel text-xl py-2.5 rounded border-2 border-amber-600 shadow-xl transition transform hover:scale-[1.02] cursor-pointer">
+                <button id="menuContinueBtn" class="w-full bg-amber-800 hover:bg-amber-700 active:bg-amber-900 text-amber-100 font-pixel text-xl py-2.5 rounded-lg border-2 border-amber-500 shadow-xl transition transform hover:scale-[1.01] cursor-pointer uppercase">
                     📁 CONTINUA PARTITA
                 </button>
-                <div class="grid grid-cols-3 gap-2 pt-1">
-                    <button id="menuTutorialBtn" type="button" class="bg-stone-800 hover:bg-stone-700 text-emerald-300 font-pixel text-base py-2 rounded border-2 border-emerald-700 transition cursor-pointer">
+                <div class="grid grid-cols-3 gap-2 pt-0.5">
+                    <button id="menuTutorialBtn" type="button" class="bg-stone-800 hover:bg-stone-700 text-emerald-300 font-pixel text-lg py-2 rounded-lg border-2 border-emerald-700 transition cursor-pointer uppercase">
                         📘 TUTORIAL
                     </button>
-                    <button id="menuVolumeBtn" type="button" class="bg-stone-800 hover:bg-stone-700 text-amber-300 font-pixel text-base py-2 rounded border-2 border-amber-700 transition cursor-pointer">
+                    <button id="menuVolumeBtn" type="button" class="bg-stone-800 hover:bg-stone-700 text-amber-300 font-pixel text-lg py-2 rounded-lg border-2 border-amber-700 transition cursor-pointer uppercase">
                         🔊 VOLUMI
                     </button>
-                    <button id="menuCreditsBtn" type="button" class="bg-stone-800 hover:bg-stone-700 text-stone-400 font-pixel text-base py-2 rounded border-2 border-stone-600 transition cursor-pointer">
+                    <button id="menuCreditsBtn" type="button" class="bg-stone-800 hover:bg-stone-700 text-stone-300 font-pixel text-lg py-2 rounded-lg border-2 border-stone-600 transition cursor-pointer uppercase">
                         📜 CREDITI
                     </button>
                 </div>
-                <button id="menuExitBtn" class="w-full bg-stone-800 hover:bg-stone-700 text-stone-300 font-pixel text-lg py-2 rounded border-2 border-stone-600 transition cursor-pointer">
-                    🚪 ESCI
+                <button id="menuExitBtn" class="w-full bg-stone-800 hover:bg-red-950 text-red-300 font-pixel text-xl py-2 rounded-lg border-2 border-red-800 hover:border-red-600 transition cursor-pointer uppercase">
+                    🚪 ESCI DAL GIOCO
                 </button>
             </div>
 
-            <div class="text-[10px] text-stone-500 font-typewriter tracking-wider">
+            <div class="w-full pt-1 border-t border-stone-800 text-[11px] font-pixel text-stone-400 tracking-wider uppercase">
                 GLORIA ALLA REPUBBLICA DI NOVOGRAD • v<span id="versionTag">4.2.0</span>
             </div>
         </div>
@@ -655,90 +667,100 @@
 
     <!-- PAUSE MENU SCREEN -->
     <div id="pauseMenuScreen" class="fixed inset-0 z-[100000000] bg-stone-950/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center overflow-y-auto hidden">
-        <div class="max-w-sm w-full bg-stone-900 border-4 border-red-900 p-5 rounded-xl shadow-2xl flex flex-col items-center space-y-4 my-auto">
+        <div class="max-w-md w-full bg-stone-900 border-4 border-amber-600 rounded-xl shadow-2xl p-5 flex flex-col items-center space-y-3.5 my-auto">
+            <div class="w-full flex items-center justify-between border-b-2 border-stone-800 pb-2">
+                <span class="font-pixel text-amber-500 text-lg font-bold uppercase tracking-widest flex items-center gap-1.5">
+                    <span>★</span> VALICO DI KRASNA
+                </span>
+                <span class="font-pixel text-base font-bold text-amber-400 bg-stone-950 px-2.5 py-0.5 rounded border border-stone-700 tracking-wider">PAUSA</span>
+            </div>
+
             <div class="flex flex-col items-center justify-center">
-                <div class="w-14 h-14 mb-2 relative flex items-center justify-center">
-                    <svg class="w-full h-full drop-shadow-[0_0_12px_rgba(220,38,38,0.4)]" viewBox="0 0 100 100">
+                <div class="w-14 h-14 mb-1.5 relative flex items-center justify-center">
+                    <svg class="w-full h-full drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]" viewBox="0 0 100 100">
                         <circle cx="50" cy="50" r="46" fill="#171717" stroke="#991b1b" stroke-width="4"/>
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="4 2"/>
-                        <polygon points="50,12 61,38 90,38 66,54 75,82 50,65 25,82 34,54 10,38 39,38" fill="#b91c1c" stroke="#f87171" stroke-width="1.5"/>
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#d97706" stroke-width="2" stroke-dasharray="4 2"/>
+                        <polygon points="50,12 61,38 90,38 66,54 75,82 50,65 25,82 34,54 10,38 39,38" fill="#b91c1c" stroke="#fbbf24" stroke-width="1.5"/>
                     </svg>
                 </div>
-                <h2 class="font-pixel text-4xl text-amber-400 font-bold tracking-widest mb-0.5 text-outline-dark">GIOCO IN PAUSA</h2>
-                <p class="text-[11px] text-stone-400 font-typewriter uppercase tracking-widest font-bold">KRASNA PASS 1840 • VALICO STATALE</p>
-                <div class="w-3/4 h-0.5 bg-red-900/60 my-2"></div>
+                <h2 class="font-pixel text-4xl text-amber-400 font-bold tracking-widest mb-0.5 text-outline-dark uppercase">GIOCO IN PAUSA</h2>
+                <p class="font-pixel text-xs text-stone-400 uppercase tracking-widest font-bold">VALICO DI FRONTIERA • TURNO DI ISPEZIONE SOSPESO</p>
             </div>
 
             <div class="space-y-2.5 w-full">
-                <button id="pauseResumeBtn" class="w-full btn-soviet-green text-white font-pixel text-2xl py-3 rounded-lg border-2 border-emerald-400 shadow-xl transition transform hover:scale-[1.02] cursor-pointer text-outline-dark">
+                <button id="pauseResumeBtn" class="w-full btn-soviet-green text-white font-pixel text-2xl py-3 rounded-lg border-2 border-emerald-400 shadow-xl transition transform hover:scale-[1.01] cursor-pointer text-outline-dark uppercase">
                     ▶ RIPRENDI
                 </button>
-                <button id="pauseLoadBtn" class="w-full bg-amber-800 hover:bg-amber-700 active:bg-amber-900 text-amber-100 font-pixel text-xl py-2.5 rounded border-2 border-amber-600 shadow-xl transition transform hover:scale-[1.02] cursor-pointer">
+                <button id="pauseLoadBtn" class="w-full bg-amber-800 hover:bg-amber-700 active:bg-amber-900 text-amber-100 font-pixel text-xl py-2.5 rounded-lg border-2 border-amber-500 shadow-xl transition transform hover:scale-[1.01] cursor-pointer uppercase">
                     📁 CARICA PARTITA
                 </button>
                 <div class="grid grid-cols-2 gap-2 pt-0.5">
-                    <button id="pauseTutorialBtn" type="button" class="bg-stone-800 hover:bg-stone-700 text-emerald-300 font-pixel text-base py-2 rounded border-2 border-emerald-700 transition cursor-pointer">
+                    <button id="pauseTutorialBtn" type="button" class="bg-stone-800 hover:bg-stone-700 text-emerald-300 font-pixel text-xl py-2 rounded-lg border-2 border-emerald-700 transition cursor-pointer uppercase">
                         📘 TUTORIAL
                     </button>
-                    <button id="pauseCreditsBtn" type="button" class="bg-stone-800 hover:bg-stone-700 text-stone-300 font-pixel text-base py-2 rounded border-2 border-stone-600 transition cursor-pointer">
+                    <button id="pauseCreditsBtn" type="button" class="bg-stone-800 hover:bg-stone-700 text-stone-300 font-pixel text-xl py-2 rounded-lg border-2 border-stone-600 transition cursor-pointer uppercase">
                         📜 CREDITI
                     </button>
                 </div>
-                <button id="pauseExitBtn" class="w-full bg-stone-800 hover:bg-red-950 text-red-200 border-2 border-red-800 hover:border-red-600 font-pixel text-lg py-2 rounded transition cursor-pointer">
+                <button id="pauseExitBtn" class="w-full bg-stone-800 hover:bg-red-950 text-red-300 border-2 border-red-800 hover:border-red-600 font-pixel text-xl py-2 rounded-lg transition cursor-pointer uppercase">
                     🚪 ESCI AL MENU PRINCIPALE
                 </button>
             </div>
 
-            <div class="text-[10px] text-stone-500 font-typewriter tracking-wider">
+            <div class="w-full pt-1 border-t border-stone-800 text-[11px] font-pixel text-stone-500 tracking-wider uppercase">
                 PREMI ESC PER RIPRENDERE IL GIOCO
             </div>
         </div>
     </div>
 
     <!-- CREDITS MODAL -->
-    <div id="creditsModal" class="fixed inset-0 z-[100000005] bg-stone-950/95 flex items-center justify-center p-4 hidden backdrop-blur-sm">
-        <div class="w-full max-w-sm bg-stone-900 border-4 border-red-900 rounded-xl shadow-2xl p-7 flex flex-col items-center space-y-5 text-center">
-
-            <!-- Stemma -->
-            <svg class="w-14 h-14 drop-shadow-[0_0_10px_rgba(220,38,38,0.35)]" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="46" fill="#171717" stroke="#991b1b" stroke-width="4"/>
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="4 2"/>
-                <polygon points="50,12 61,38 90,38 66,54 75,82 50,65 25,82 34,54 10,38 39,38" fill="#b91c1c" stroke="#f87171" stroke-width="1.5"/>
-            </svg>
-
-            <div>
-                <h2 class="font-pixel text-3xl text-red-500 font-bold tracking-widest uppercase">CREDITI</h2>
-                <div class="w-2/3 h-0.5 bg-red-900/60 mx-auto mt-2"></div>
+    <div id="creditsModal" class="fixed inset-0 z-[100000005] bg-stone-950/90 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="w-full max-w-md bg-stone-900 border-4 border-amber-600 rounded-xl shadow-2xl p-5 flex flex-col items-center space-y-3.5 text-center">
+            <div class="w-full flex items-center justify-between border-b-2 border-stone-800 pb-2">
+                <span class="font-pixel text-amber-500 text-lg font-bold uppercase tracking-widest flex items-center gap-1.5">
+                    <span>★</span> RICONOSCIMENTI UFFICIALI
+                </span>
+                <button id="closeCreditsBtn" type="button" class="text-stone-300 hover:text-white bg-red-950 hover:bg-red-900 border border-red-700 font-pixel text-base px-2.5 py-0.5 rounded cursor-pointer transition">✕ CHIUDI</button>
             </div>
 
-            <!-- Sezione principale -->
-            <div class="w-full space-y-4 font-typewriter text-sm text-stone-300 leading-relaxed">
+            <div class="flex flex-col items-center justify-center">
+                <div class="w-14 h-14 mb-1 relative flex items-center justify-center">
+                    <svg class="w-full h-full drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="46" fill="#171717" stroke="#991b1b" stroke-width="4"/>
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#d97706" stroke-width="2" stroke-dasharray="4 2"/>
+                        <polygon points="50,12 61,38 90,38 66,54 75,82 50,65 25,82 34,54 10,38 39,38" fill="#b91c1c" stroke="#fbbf24" stroke-width="1.5"/>
+                    </svg>
+                </div>
+                <h2 class="font-pixel text-3xl md:text-4xl text-amber-400 font-bold tracking-widest uppercase text-outline-dark">CREDITI</h2>
+            </div>
 
-                <div class="bg-stone-950 border border-stone-700 rounded-lg p-4 space-y-1">
-                    <div class="font-pixel text-base text-amber-400 tracking-wider uppercase mb-2">Ideazione e Sviluppo</div>
-                    <div class="text-stone-100 font-bold text-base tracking-wide">Salvatore Paolo Alfieri</div>
-                    <div class="text-xs text-stone-500 uppercase tracking-widest">Game Designer • Programmatore • Narratore</div>
+            <!-- Sezioni descrittive -->
+            <div class="w-full space-y-2.5">
+                <div class="bg-stone-950 border-2 border-stone-800 rounded-lg p-3 text-center shadow-inner">
+                    <div class="font-pixel text-sm text-amber-400 tracking-wider uppercase mb-0.5">IDEAZIONE E SVILUPPO</div>
+                    <div class="font-pixel text-2xl md:text-3xl text-stone-100 font-bold tracking-widest uppercase text-outline-dark">SALVATORE PAOLO ALFIERI</div>
+                    <div class="font-pixel text-xs text-stone-400 uppercase tracking-widest mt-0.5">GAME DESIGNER • PROGRAMMATORE • NARRATORE</div>
                 </div>
 
-                <div class="bg-stone-950 border border-stone-700 rounded-lg p-3 space-y-1 text-xs text-stone-400">
-                    <div class="font-pixel text-sm text-stone-300 tracking-wider mb-1">Tecnologie Utilizzate</div>
-                    <div>HTML5 · CSS3 · JavaScript</div>
-                    <div>NW.js · Tailwind CSS</div>
-                    <div>VT323 · Courier Prime · Special Elite</div>
+                <div class="bg-stone-950 border-2 border-stone-800 rounded-lg p-3 text-center shadow-inner">
+                    <div class="font-pixel text-sm text-amber-400 tracking-wider mb-0.5 uppercase">TECNOLOGIE UTILIZZATE</div>
+                    <div class="font-pixel text-lg text-stone-200 uppercase tracking-wider">HTML5 · CSS3 · JAVASCRIPT · NW.JS</div>
+                    <div class="font-pixel text-xs text-stone-400 uppercase tracking-wider mt-0.5">VT323 · COURIER PRIME · SPECIAL ELITE</div>
                 </div>
 
-                <div class="bg-stone-950 border border-stone-700 rounded-lg p-3 text-xs text-stone-500 leading-relaxed">
-                    <span class="text-stone-400 font-bold">Krasna Pass 1840</span> è un'opera di finzione.<br>
-                    Personaggi, luoghi e istituzioni sono interamente inventati.<br>
-                    Qualsiasi riferimento a fatti o persone reali è puramente casuale.
+                <div class="bg-stone-950 border-2 border-stone-800 rounded-lg p-2.5 text-center shadow-inner">
+                    <div class="font-pixel text-xs md:text-sm text-stone-300 uppercase leading-snug tracking-wide">
+                        KRASNA PASS 1840 È UN'OPERA DI FINZIONE.<br>
+                        PERSONAGGI, LUOGHI E ISTITUZIONI SONO INTERAMENTE INVENTATI.
+                    </div>
                 </div>
 
-                <div class="text-[11px] text-stone-600 tracking-widest uppercase">
-                    © 2024–2025 · Tutti i diritti riservati
+                <div class="font-pixel text-xs text-stone-500 tracking-widest uppercase pt-0.5">
+                    © 2024–2025 · TUTTI I DIRITTI RISERVATI
                 </div>
             </div>
 
-            <button id="closeCreditsBtn" type="button" class="w-full bg-stone-800 hover:bg-stone-700 text-stone-200 font-pixel text-xl py-2.5 rounded border-2 border-stone-600 cursor-pointer transition">
+            <button id="closeCreditsBtnBottom" type="button" class="w-full bg-stone-800 hover:bg-stone-700 text-stone-200 font-pixel text-2xl py-2 rounded-lg border-2 border-stone-600 cursor-pointer transition uppercase">
                 ← TORNA AL MENU
             </button>
         </div>
@@ -767,97 +789,111 @@
 
     <!-- CITATION MODAL -->
     <div id="citationModal" class="fixed inset-0 z-[999999999] bg-stone-950/80 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-        <div id="citationBanner" class="bg-red-950 border-4 border-red-600 text-red-100 p-6 rounded-xl shadow-2xl max-w-md w-full relative">
-            <div class="flex justify-between items-center border-b-2 border-red-800 pb-2 mb-3">
-                <span id="citationTitle" class="font-pixel text-2xl md:text-3xl font-bold text-red-400 text-outline-dark">⚠️ SANZIONE MINISTERIALE!</span>
-                <button id="closeCitationBtn" type="button" class="text-stone-200 hover:text-white bg-red-800 hover:bg-red-700 border border-red-400 font-bold text-base px-3 py-1 rounded cursor-pointer transition">
+        <div id="citationBanner" class="bg-stone-900 border-4 border-red-600 rounded-xl shadow-2xl max-w-md w-full p-5 space-y-3.5">
+            <div class="flex justify-between items-center border-b-2 border-stone-800 pb-2">
+                <span class="font-pixel text-red-500 text-lg font-bold uppercase tracking-widest flex items-center gap-1.5">
+                    <span>★</span> MINISTERO DEGLI INTERNI
+                </span>
+                <button id="closeCitationBtn" type="button" class="text-stone-300 hover:text-white bg-red-950 hover:bg-red-900 border border-red-700 font-pixel text-base px-2.5 py-0.5 rounded cursor-pointer transition uppercase">
                     ✕ CHIUDI
                 </button>
             </div>
-            <p id="citationText" class="text-sm md:text-base font-typewriter leading-relaxed text-stone-100 mb-4 font-bold">
-                La decisione inserita non rispetta le direttive ministeriali attive.
-            </p>
-            <div id="citationFineText" class="text-right font-pixel text-2xl font-bold text-red-400 text-outline-dark">PENALITÀ MULTA: -$5</div>
+            <div class="text-center">
+                <span id="citationTitle" class="font-pixel text-3xl md:text-4xl font-bold text-red-500 text-outline-dark uppercase tracking-wider block mb-2">⚠️ SANZIONE MINISTERIALE!</span>
+                <div class="bg-stone-950 border-2 border-stone-800 rounded-lg p-3.5 shadow-inner text-left">
+                    <p id="citationText" class="font-pixel text-lg md:text-xl text-stone-200 uppercase leading-snug tracking-wider font-bold">
+                        LA DECISIONE INSERITA NON RISPETTA LE DIRETTIVE MINISTERIALI ATTIVE.
+                    </p>
+                </div>
+            </div>
+            <div id="citationFineText" class="text-right font-pixel text-2xl font-bold text-red-400 text-outline-dark uppercase pt-1 border-t border-stone-800">PENALITÀ MULTA: -$5</div>
         </div>
     </div>
 
     <!-- END OF DAY MODAL -->
-    <div id="endOfDayModal" class="fixed inset-0 z-[100000] bg-stone-950/90 flex items-center justify-center p-4 hidden backdrop-blur-sm">
-        <div class="bg-stone-900 border-2 border-stone-700 rounded-lg p-6 max-w-md w-full shadow-2xl">
-            <div class="border-b border-stone-700 pb-3 mb-4 text-center">
-                <h2 class="font-pixel text-4xl text-amber-400 font-bold">FINE GIORNATA LAVORATIVA</h2>
-                <p class="text-xs text-stone-400 uppercase tracking-widest mt-1">Rapporto Finanziario Statale</p>
+    <div id="endOfDayModal" class="fixed inset-0 z-[100000] bg-stone-950/90 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-stone-900 border-4 border-amber-600 rounded-xl p-5 max-w-md w-full shadow-2xl space-y-3.5">
+            <div class="flex items-center justify-between border-b-2 border-stone-800 pb-2">
+                <span class="font-pixel text-amber-500 text-lg font-bold uppercase tracking-widest flex items-center gap-1.5">
+                    <span>★</span> RAPPORTO GIORNALIERO
+                </span>
+                <span class="font-pixel text-base font-bold text-amber-400 bg-stone-950 px-2.5 py-0.5 rounded border border-stone-700 tracking-wider">FINE TURNO</span>
             </div>
 
-            <div class="space-y-3 font-typewriter text-xs md:text-sm text-stone-300 mb-6">
+            <div class="text-center">
+                <h2 class="font-pixel text-3xl md:text-4xl text-amber-400 font-bold tracking-widest uppercase text-outline-dark">FINE GIORNATA LAVORATIVA</h2>
+                <p class="font-pixel text-xs text-stone-400 uppercase tracking-widest font-bold">BILANCIO FINANZIARIO E CONDIZIONI FAMILIARI</p>
+            </div>
+
+            <div class="bg-stone-950 border-2 border-stone-800 rounded-lg p-3.5 space-y-2.5 shadow-inner font-pixel text-lg text-stone-300 uppercase tracking-wider">
                 <div class="flex justify-between border-b border-stone-800 pb-1">
-                    <span>Viaggiatori Processati Correttamente:</span>
+                    <span>VIAGGIATORI CONFORMI:</span>
                     <span id="eodCorrectCount" class="text-emerald-400 font-bold">0</span>
                 </div>
                 <div class="flex justify-between border-b border-stone-800 pb-1">
-                    <span>Stipendio & Bonus:</span>
+                    <span>STIPENDIO E BONUS:</span>
                     <span id="eodGrossSalary" class="text-emerald-400 font-bold">$0</span>
                 </div>
                 <div class="flex justify-between border-b border-stone-800 pb-1">
-                    <span>Penali per Errori / Multe:</span>
+                    <span>PENALITÀ E MULTE:</span>
                     <span id="eodFines" class="text-red-400 font-bold">-$0</span>
                 </div>
 
-                <div id="eodEventBox" class="hidden bg-amber-950/50 border-2 border-amber-600 rounded p-2 text-amber-100 text-xs font-bold leading-snug">
-                    <div class="font-pixel text-lg text-amber-400">📰 ESITO DELLA NOTIZIA</div>
+                <div id="eodEventBox" class="hidden bg-amber-950/50 border border-amber-600 rounded p-2 text-amber-100 text-sm leading-snug">
+                    <div class="font-pixel text-base text-amber-400">📰 ESITO DELLA NOTIZIA</div>
                     <div id="eodEventText"></div>
                 </div>
-                <div id="eodStanding" class="hidden text-[11px] text-stone-400 text-center"></div>
+                <div id="eodStanding" class="hidden text-xs text-stone-400 text-center"></div>
 
-                <div class="pt-2 font-bold text-stone-400 uppercase text-[11px] tracking-wider flex justify-between items-center">
-                    <span>Spese Familiari & Riscaldamento:</span>
-                    <span class="flex items-center gap-2 normal-case">
-                        <span class="w-24 h-2.5 bg-stone-800 border border-stone-600 rounded overflow-hidden inline-block"><span id="familyHealthBar" class="block h-full bg-emerald-500 transition-all duration-300" style="width:100%"></span></span>
-                        <span id="familyStatusText" class="text-emerald-400 text-xs font-bold">Salute: 100%</span>
+                <div class="pt-1 text-amber-400 flex justify-between items-center text-base">
+                    <span>SALUTE FAMIGLIA:</span>
+                    <span class="flex items-center gap-2">
+                        <span class="w-24 h-2 bg-stone-800 border border-stone-600 rounded overflow-hidden inline-block"><span id="familyHealthBar" class="block h-full bg-emerald-500 transition-all duration-300" style="width:100%"></span></span>
+                        <span id="familyStatusText" class="text-emerald-400 text-sm font-bold">100%</span>
                     </span>
                 </div>
-                <div id="familyWarning" class="hidden text-[11px] font-bold text-red-300 bg-red-950/50 border border-red-800 rounded p-1.5 leading-snug"></div>
+                <div id="familyWarning" class="hidden text-xs font-bold text-red-300 bg-red-950/50 border border-red-800 rounded p-1.5 leading-snug"></div>
                 
-                <div class="flex justify-between items-center">
+                <div class="flex justify-between items-center text-base">
                     <label class="flex items-center space-x-2">
                         <input type="checkbox" id="payRentCheck" checked disabled class="accent-amber-600">
-                        <span id="rentLabelText">Affitto Alloggio Statale</span>
+                        <span id="rentLabelText">AFFITTO ALLOGGIO STATALE</span>
                     </label>
                     <span id="rentCostText" class="text-stone-300 font-bold">$10</span>
                 </div>
 
-                <div class="flex justify-between items-center">
+                <div class="flex justify-between items-center text-base">
                     <label class="flex items-center space-x-2 cursor-pointer">
                         <input type="checkbox" id="payFoodCheck" checked class="accent-amber-600 cursor-pointer">
-                        <span>Cibo per la Famiglia</span>
+                        <span>CIBO PER LA FAMIGLIA</span>
                     </label>
                     <span id="foodCostText" class="text-stone-300 font-bold">$8</span>
                 </div>
 
-                <div class="flex justify-between items-center">
+                <div class="flex justify-between items-center text-base">
                     <label class="flex items-center space-x-2 cursor-pointer">
                         <input type="checkbox" id="payHeatCheck" checked class="accent-amber-600 cursor-pointer">
-                        <span id="heatLabelText">Riscaldamento Carbone</span>
+                        <span id="heatLabelText">RISCALDAMENTO CARBONE</span>
                     </label>
                     <span id="heatCostText" class="text-stone-300 font-bold">$5</span>
                 </div>
 
-                <div id="medicineExpenseRow" class="flex justify-between items-center hidden bg-red-950/40 p-1.5 rounded border border-red-800">
+                <div id="medicineExpenseRow" class="flex justify-between items-center hidden bg-red-950/40 p-1.5 rounded border border-red-800 text-base">
                     <label class="flex items-center space-x-2 cursor-pointer text-red-300">
                         <input type="checkbox" id="payMedicineCheck" class="accent-red-600 cursor-pointer">
-                        <span>Medicinali per tuo Figlio</span>
+                        <span>MEDICINALI PER TUO FIGLIO</span>
                     </label>
                     <span class="text-red-400 font-bold">$80</span>
                 </div>
             </div>
 
-            <div class="flex justify-between items-center pt-2 border-t border-stone-800">
+            <div class="flex justify-between items-center pt-1 border-t-2 border-stone-800">
                 <div>
-                    <span class="text-xs text-stone-400">Saldo Netto: </span>
+                    <span class="font-pixel text-sm text-stone-400 uppercase">SALDO FINALE: </span>
                     <span id="eodNetBalance" class="font-pixel text-3xl text-emerald-400 font-bold">$0</span>
                 </div>
-                <button id="startNextDayBtn" class="bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold text-sm px-6 py-3 rounded shadow transition cursor-pointer">
-                    INIZIA PROSSIMO GIORNO
+                <button id="startNextDayBtn" class="btn-soviet-green text-white font-pixel text-2xl py-2 px-5 rounded-lg border-2 border-emerald-400 shadow-xl transition transform hover:scale-[1.01] cursor-pointer text-outline-dark uppercase">
+                    INIZIA PROSSIMO GIORNO ▶
                 </button>
             </div>
         </div>
@@ -865,17 +901,29 @@
 
     <!-- GAME OVER / ENDINGS MODAL -->
     <div id="gameOverModal" class="fixed inset-0 z-[100000] bg-stone-950/95 flex items-center justify-center p-4 hidden">
-        <div class="bg-red-950 border-2 border-red-700 rounded-lg p-6 max-w-md w-full text-center shadow-2xl">
-            <h2 id="gameOverTitle" class="font-pixel text-4xl text-red-500 font-bold mb-3">LICENZIATO ED ARRESTATO</h2>
-            <p id="gameOverReason" class="text-sm font-typewriter text-red-200 mb-6 leading-relaxed whitespace-pre-line text-left max-h-[55vh] overflow-y-auto pr-1">
-                Sei andato in bancarotta e non sei stato in grado di sostenere i costi dell'alloggio statale.
-            </p>
-            <button id="restartGameBtn" class="bg-stone-200 hover:bg-white text-stone-950 font-bold text-sm px-8 py-3 rounded shadow transition cursor-pointer">
-                RICOMINCIA CAMPAGNA
-            </button>
-            <button id="exitToMenuBtn" class="mt-3 block mx-auto bg-transparent hover:bg-red-900 text-red-200 border border-red-700 font-bold text-sm px-8 py-2.5 rounded transition cursor-pointer">
-                ESCI AL MENU PRINCIPALE
-            </button>
+        <div class="bg-stone-900 border-4 border-red-700 rounded-xl p-5 max-w-md w-full text-center shadow-2xl space-y-3.5">
+            <div class="flex items-center justify-between border-b-2 border-stone-800 pb-2">
+                <span class="font-pixel text-red-500 text-lg font-bold uppercase tracking-widest flex items-center gap-1.5">
+                    <span>★</span> TRIBUNALE DI STATO
+                </span>
+                <span class="font-pixel text-base font-bold text-red-400 bg-stone-950 px-2.5 py-0.5 rounded border border-red-900 tracking-wider">SENTENZA</span>
+            </div>
+
+            <div>
+                <h2 id="gameOverTitle" class="font-pixel text-3xl md:text-4xl text-red-500 font-bold uppercase tracking-wider text-outline-dark mb-1">LICENZIATO ED ARRESTATO</h2>
+                <div class="bg-stone-950 border-2 border-stone-800 rounded-lg p-3.5 max-h-[45vh] overflow-y-auto pr-1 shadow-inner">
+                    <p id="gameOverReason" class="font-pixel text-lg md:text-xl text-stone-200 uppercase leading-snug tracking-wider text-left whitespace-pre-line"></p>
+                </div>
+            </div>
+
+            <div class="space-y-2 pt-1 border-t-2 border-stone-800">
+                <button id="restartGameBtn" class="w-full btn-soviet-green text-white font-pixel text-2xl py-2.5 rounded-lg border-2 border-emerald-400 shadow-xl transition transform hover:scale-[1.01] cursor-pointer text-outline-dark uppercase">
+                    ★ RICOMINCIA CAMPAGNA
+                </button>
+                <button id="exitToMenuBtn" class="w-full bg-stone-800 hover:bg-red-950 text-red-300 font-pixel text-xl py-2 rounded-lg border-2 border-red-800 hover:border-red-600 transition cursor-pointer uppercase">
+                    🚪 ESCI AL MENU PRINCIPALE
+                </button>
+            </div>
         </div>
     </div>
 
@@ -3543,6 +3591,7 @@
             const creditsModal = gid('creditsModal');
             gid('menuCreditsBtn').onclick = () => creditsModal.classList.remove('hidden');
             gid('closeCreditsBtn').onclick = () => creditsModal.classList.add('hidden');
+            if (gid('closeCreditsBtnBottom')) gid('closeCreditsBtnBottom').onclick = () => creditsModal.classList.add('hidden');
             creditsModal.addEventListener('click', (e) => { if (e.target === creditsModal) creditsModal.classList.add('hidden'); });
 
             // Pause Menu Eventi
