@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="game-version" content="4.2.3">
+    <meta name="game-version" content="4.2.3.1">
     <script>
     // Bootstrap aggiornamenti (solo app desktop NW.js): se esiste una versione piu' recente scaricata, la usa al posto di questa.
     (function () {
@@ -602,38 +602,40 @@
     </main>
 
     <!-- MAIN MENU SCREEN -->
-    <div id="mainMenuScreen" class="fixed inset-0 z-[100000] bg-stone-950 flex flex-col items-center justify-center p-6 text-center">
-        <div class="max-w-md w-full bg-stone-900 border-4 border-red-900 p-8 rounded-xl shadow-2xl flex flex-col items-center space-y-6">
+    <div id="mainMenuScreen" class="fixed inset-0 z-[100000] bg-stone-950 flex flex-col items-center justify-center p-4 text-center overflow-y-auto">
+        <div class="max-w-sm w-full bg-stone-900 border-4 border-red-900 p-5 rounded-xl shadow-2xl flex flex-col items-center space-y-4 my-auto">
             <div class="flex flex-col items-center justify-center">
-                <div class="w-24 h-24 mb-3 relative flex items-center justify-center">
+                <div class="w-16 h-16 mb-2 relative flex items-center justify-center">
                     <svg class="w-full h-full drop-shadow-[0_0_15px_rgba(220,38,38,0.4)]" viewBox="0 0 100 100">
                         <circle cx="50" cy="50" r="46" fill="#171717" stroke="#991b1b" stroke-width="4"/>
                         <circle cx="50" cy="50" r="40" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="4 2"/>
                         <polygon points="50,12 61,38 90,38 66,54 75,82 50,65 25,82 34,54 10,38 39,38" fill="#b91c1c" stroke="#f87171" stroke-width="1.5"/>
                     </svg>
                 </div>
-                <h1 class="font-pixel text-5xl text-red-500 font-bold tracking-widest mb-1">KRASNA PASS 1840</h1>
+                <h1 class="font-pixel text-4xl text-red-500 font-bold tracking-widest mb-1">KRASNA PASS 1840</h1>
                 <p class="text-xs text-amber-500 font-typewriter uppercase tracking-widest font-bold">ISPETTORE DI CONFINE • REPUBBLICA DI NOVOGRAD</p>
                 <div class="w-3/4 h-0.5 bg-red-900/60 my-2"></div>
             </div>
 
-            <div class="space-y-3 w-full pt-2">
-                <button id="menuNewGameBtn" class="w-full bg-red-900 hover:bg-red-800 active:bg-red-950 text-white font-pixel text-2xl py-3 rounded border-2 border-red-600 shadow-xl transition transform hover:scale-[1.02] cursor-pointer">
+            <div class="space-y-2 w-full">
+                <button id="menuNewGameBtn" class="w-full bg-red-900 hover:bg-red-800 active:bg-red-950 text-white font-pixel text-xl py-2.5 rounded border-2 border-red-600 shadow-xl transition transform hover:scale-[1.02] cursor-pointer">
                     ★ INIZIA NUOVA CAMPAGNA (20 GIORNI)
                 </button>
-                <button id="menuContinueBtn" class="w-full bg-amber-800 hover:bg-amber-700 active:bg-amber-900 text-amber-100 font-pixel text-2xl py-3 rounded border-2 border-amber-600 shadow-xl transition transform hover:scale-[1.02] cursor-pointer">
+                <button id="menuContinueBtn" class="w-full bg-amber-800 hover:bg-amber-700 active:bg-amber-900 text-amber-100 font-pixel text-xl py-2.5 rounded border-2 border-amber-600 shadow-xl transition transform hover:scale-[1.02] cursor-pointer">
                     📁 CONTINUA PARTITA
                 </button>
-                <button id="menuTutorialBtn" type="button" class="w-full bg-stone-800 hover:bg-stone-700 text-emerald-300 font-pixel text-2xl py-3 rounded border-2 border-emerald-700 transition cursor-pointer">
-                    📘 TUTORIAL
-                </button>
-                <button id="menuVolumeBtn" type="button" class="w-full bg-stone-800 hover:bg-stone-700 text-amber-300 font-pixel text-2xl py-3 rounded border-2 border-amber-700 transition cursor-pointer">
-                    🔊 VOLUMI
-                </button>
-                <button id="menuCreditsBtn" type="button" class="w-full bg-stone-800 hover:bg-stone-700 text-stone-400 font-pixel text-2xl py-3 rounded border-2 border-stone-600 transition cursor-pointer">
-                    📜 CREDITI
-                </button>
-                <button id="menuExitBtn" class="w-full bg-stone-800 hover:bg-stone-700 text-stone-300 font-pixel text-2xl py-3 rounded border-2 border-stone-600 transition cursor-pointer">
+                <div class="grid grid-cols-3 gap-2 pt-1">
+                    <button id="menuTutorialBtn" type="button" class="bg-stone-800 hover:bg-stone-700 text-emerald-300 font-pixel text-base py-2 rounded border-2 border-emerald-700 transition cursor-pointer">
+                        📘 TUTORIAL
+                    </button>
+                    <button id="menuVolumeBtn" type="button" class="bg-stone-800 hover:bg-stone-700 text-amber-300 font-pixel text-base py-2 rounded border-2 border-amber-700 transition cursor-pointer">
+                        🔊 VOLUMI
+                    </button>
+                    <button id="menuCreditsBtn" type="button" class="bg-stone-800 hover:bg-stone-700 text-stone-400 font-pixel text-base py-2 rounded border-2 border-stone-600 transition cursor-pointer">
+                        📜 CREDITI
+                    </button>
+                </div>
+                <button id="menuExitBtn" class="w-full bg-stone-800 hover:bg-stone-700 text-stone-300 font-pixel text-lg py-2 rounded border-2 border-stone-600 transition cursor-pointer">
                     🚪 ESCI
                 </button>
             </div>
