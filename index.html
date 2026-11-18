@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="game-version" content="4.2.4.1">
+    <meta name="game-version" content="4.4">
     <script>
     // Bootstrap aggiornamenti (solo app desktop NW.js): se esiste una versione piu' recente scaricata, la usa al posto di questa.
     (function () {
@@ -274,18 +274,25 @@
     </div>
 
     <!-- TUTORIAL -->
-    <div id="tutorialModal" class="fixed inset-0 z-[100000005] bg-stone-950/90 flex items-center justify-center p-4 hidden">
-        <div class="w-full max-w-sm bg-stone-900 border-4 border-emerald-700 rounded-xl shadow-2xl p-5 text-center space-y-3">
-            <div class="flex items-center justify-between">
-                <span id="tutorialStep" class="text-xs font-bold text-stone-400 font-typewriter tracking-widest">1 / 4</span>
-                <button id="tutorialCloseBtn" type="button" class="hidden text-stone-200 bg-red-800 hover:bg-red-700 border border-red-400 font-bold text-sm px-3 py-1 rounded cursor-pointer transition">✕</button>
+    <div id="tutorialModal" class="fixed inset-0 z-[100000005] bg-stone-950/90 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="w-full max-w-md bg-stone-900 border-4 border-amber-600 rounded-xl shadow-2xl p-5 text-center space-y-3.5">
+            <div class="flex items-center justify-between border-b-2 border-stone-800 pb-2">
+                <span class="font-pixel text-amber-500 text-lg font-bold uppercase tracking-widest flex items-center gap-1.5">
+                    <span>★</span> GUIDA ISPETTORE
+                </span>
+                <span id="tutorialStep" class="font-pixel text-lg font-bold text-amber-400 bg-stone-950 px-2.5 py-0.5 rounded border border-stone-700 tracking-wider">1 / 5</span>
+                <button id="tutorialCloseBtn" type="button" class="hidden text-stone-300 hover:text-white bg-red-950 hover:bg-red-900 border border-red-700 font-pixel text-base px-2.5 py-0.5 rounded cursor-pointer transition">✕ CHIUDI</button>
             </div>
-            <div id="tutorialIcon" class="text-5xl">🪪</div>
-            <h2 id="tutorialTitle" class="font-pixel text-3xl text-emerald-400 font-bold uppercase tracking-wider">Controlla</h2>
-            <p id="tutorialText" class="text-sm font-typewriter text-stone-200 leading-relaxed min-h-[72px]"></p>
-            <div class="flex gap-2 pt-1">
-                <button id="tutorialPrevBtn" type="button" class="flex-1 bg-stone-800 hover:bg-stone-700 text-stone-300 font-pixel text-xl py-2 rounded border-2 border-stone-600 cursor-pointer transition">◀ INDIETRO</button>
-                <button id="tutorialNextBtn" type="button" class="flex-1 bg-emerald-800 hover:bg-emerald-700 text-emerald-100 font-pixel text-xl py-2 rounded border-2 border-emerald-500 cursor-pointer transition">AVANTI ▶</button>
+            <div>
+                <div id="tutorialIcon" class="text-6xl drop-shadow-md mb-2">📖</div>
+                <h2 id="tutorialTitle" class="font-pixel text-3xl md:text-4xl text-amber-400 font-bold uppercase tracking-wider text-outline-dark mb-2.5">1. CONSULTA IL MANUALE</h2>
+                <div class="bg-stone-950 border-2 border-stone-800 rounded-lg p-3.5 min-h-[115px] flex items-center justify-center shadow-inner">
+                    <p id="tutorialText" class="font-pixel text-xl md:text-2xl text-stone-100 leading-snug tracking-wider uppercase"></p>
+                </div>
+            </div>
+            <div class="flex gap-2 pt-1 border-t-2 border-stone-800">
+                <button id="tutorialPrevBtn" type="button" class="flex-1 bg-stone-800 hover:bg-stone-700 text-stone-300 font-pixel text-2xl py-2 rounded border-2 border-stone-600 cursor-pointer transition">◀ INDIETRO</button>
+                <button id="tutorialNextBtn" type="button" class="flex-1 bg-emerald-800 hover:bg-emerald-700 text-emerald-100 font-pixel text-2xl py-2 rounded border-2 border-emerald-500 cursor-pointer transition">AVANTI ▶</button>
             </div>
         </div>
     </div>
@@ -3206,10 +3213,31 @@
             try { localStorage.setItem(TUTORIAL_KEY, '1'); } catch (e) {}
         }
         const TUTORIAL_STEPS = [
-            { icon: '🪪', title: 'Controlla', text: 'Premi <b>AVANTI IL PROSSIMO</b>. Confronta passaporto, permesso e bagagli con il <b>Manuale</b>. Puoi fare domande al viaggiatore.' },
-            { icon: '🔨', title: 'Decidi', text: 'Metti il timbro <b>APPROVATO</b> o <b>RESPINTO</b> (clicca il timbro o trascinalo sui documenti), poi premi <b>CONSEGNA DOCUMENTI</b>. Contrabbandieri e ricercati: <b>ARRESTA</b>.' },
-            { icon: '💸', title: 'Errori', text: 'Ogni errore è una multa, più cara a ogni multa del giorno. Gli arresti sbagliati costano di più.' },
-            { icon: '🏠', title: 'Famiglia', text: 'A fine giornata, con lo stipendio, paghi affitto, cibo, riscaldamento e le medicine se servono. Se li trascuri, la tua famiglia soffre. Le tue scelte decidono il finale.' }
+            {
+                icon: '📖',
+                title: '1. CONSULTA IL MANUALE',
+                text: 'IL LIBRO DELLE DIRETTIVE È FONDAMENTALE.<br><span class="text-amber-400">LE REGOLE CAMBIANO OGNI GIORNO:</span><br>CONTROLLA SEMPRE DOCUMENTI OBBLIGATORI, NAZIONI AMMESSE, DIVIETI E RICERCATI.'
+            },
+            {
+                icon: '🪪',
+                title: '2. ISPEZIONA I DOCUMENTI',
+                text: 'PREMI <span class="text-emerald-400">"AVANTI IL PROSSIMO"</span> PER FAR ENTRARE IL VIAGGIATORE.<br>CONFRONTA PASSAPORTO, PERMESSI E BAGAGLI CON IL MANUALE.<br>USA L\'INTERFONO PER FARE DOMANDE.'
+            },
+            {
+                icon: '🔨',
+                title: '3. TIMBRA O ARRESTA',
+                text: 'TIMBRA <span class="text-emerald-400">APPROVATO</span> OPPURE <span class="text-red-400">RESPINTO</span> E PREMI CONSEGNA.<br>SE IL VIAGGIATORE È UN CRIMINALE O HA CONTRABBANDO:<br>PREMI IL PULSANTE ROSSO <span class="text-red-400">"ARRESTA"</span>.'
+            },
+            {
+                icon: '💸',
+                title: '4. EVITA LE MULTE',
+                text: 'OGNI ERRORE DI GIUDIZIO COMPORTA UNA <span class="text-red-400">SANZIONE IN DENARO</span>.<br>PIÙ SBAGLI NELLO STESSO GIORNO, PIÙ CARE SARANNO LE MULTE.<br>ANCHE GLI ARRESTI INGIUSTI VENGONO PUNITI.'
+            },
+            {
+                icon: '🏠',
+                title: '5. MANTIENI LA FAMIGLIA',
+                text: 'A FINE TURNO USA LO STIPENDIO PER <span class="text-amber-400">AFFITTO, CIBO, CALORE E MEDICINE</span>.<br>SE TRASCURI I TUOI CARI LA LORO SALUTE CROLLERÀ.<br>LE TUE SCELTE DETERMINANO IL FINALE DELLA STORIA.'
+            }
         ];
 
         function updateMenuButtons() {
