@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="game-version" content="4.2.3.1">
+    <meta name="game-version" content="4.2.4.1">
     <script>
     // Bootstrap aggiornamenti (solo app desktop NW.js): se esiste una versione piu' recente scaricata, la usa al posto di questa.
     (function () {
@@ -274,7 +274,7 @@
     </div>
 
     <!-- TUTORIAL -->
-    <div id="tutorialModal" class="fixed inset-0 z-[1000000] bg-stone-950/90 flex items-center justify-center p-4 hidden">
+    <div id="tutorialModal" class="fixed inset-0 z-[100000005] bg-stone-950/90 flex items-center justify-center p-4 hidden">
         <div class="w-full max-w-sm bg-stone-900 border-4 border-emerald-700 rounded-xl shadow-2xl p-5 text-center space-y-3">
             <div class="flex items-center justify-between">
                 <span id="tutorialStep" class="text-xs font-bold text-stone-400 font-typewriter tracking-widest">1 / 4</span>
@@ -646,8 +646,50 @@
         </div>
     </div>
 
+    <!-- PAUSE MENU SCREEN -->
+    <div id="pauseMenuScreen" class="fixed inset-0 z-[100000000] bg-stone-950/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center overflow-y-auto hidden">
+        <div class="max-w-sm w-full bg-stone-900 border-4 border-red-900 p-5 rounded-xl shadow-2xl flex flex-col items-center space-y-4 my-auto">
+            <div class="flex flex-col items-center justify-center">
+                <div class="w-14 h-14 mb-2 relative flex items-center justify-center">
+                    <svg class="w-full h-full drop-shadow-[0_0_12px_rgba(220,38,38,0.4)]" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="46" fill="#171717" stroke="#991b1b" stroke-width="4"/>
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="4 2"/>
+                        <polygon points="50,12 61,38 90,38 66,54 75,82 50,65 25,82 34,54 10,38 39,38" fill="#b91c1c" stroke="#f87171" stroke-width="1.5"/>
+                    </svg>
+                </div>
+                <h2 class="font-pixel text-4xl text-amber-400 font-bold tracking-widest mb-0.5 text-outline-dark">GIOCO IN PAUSA</h2>
+                <p class="text-[11px] text-stone-400 font-typewriter uppercase tracking-widest font-bold">KRASNA PASS 1840 • VALICO STATALE</p>
+                <div class="w-3/4 h-0.5 bg-red-900/60 my-2"></div>
+            </div>
+
+            <div class="space-y-2.5 w-full">
+                <button id="pauseResumeBtn" class="w-full btn-soviet-green text-white font-pixel text-2xl py-3 rounded-lg border-2 border-emerald-400 shadow-xl transition transform hover:scale-[1.02] cursor-pointer text-outline-dark">
+                    ▶ RIPRENDI
+                </button>
+                <button id="pauseLoadBtn" class="w-full bg-amber-800 hover:bg-amber-700 active:bg-amber-900 text-amber-100 font-pixel text-xl py-2.5 rounded border-2 border-amber-600 shadow-xl transition transform hover:scale-[1.02] cursor-pointer">
+                    📁 CARICA PARTITA
+                </button>
+                <div class="grid grid-cols-2 gap-2 pt-0.5">
+                    <button id="pauseTutorialBtn" type="button" class="bg-stone-800 hover:bg-stone-700 text-emerald-300 font-pixel text-base py-2 rounded border-2 border-emerald-700 transition cursor-pointer">
+                        📘 TUTORIAL
+                    </button>
+                    <button id="pauseCreditsBtn" type="button" class="bg-stone-800 hover:bg-stone-700 text-stone-300 font-pixel text-base py-2 rounded border-2 border-stone-600 transition cursor-pointer">
+                        📜 CREDITI
+                    </button>
+                </div>
+                <button id="pauseExitBtn" class="w-full bg-stone-800 hover:bg-red-950 text-red-200 border-2 border-red-800 hover:border-red-600 font-pixel text-lg py-2 rounded transition cursor-pointer">
+                    🚪 ESCI AL MENU PRINCIPALE
+                </button>
+            </div>
+
+            <div class="text-[10px] text-stone-500 font-typewriter tracking-wider">
+                PREMI ESC PER RIPRENDERE IL GIOCO
+            </div>
+        </div>
+    </div>
+
     <!-- CREDITS MODAL -->
-    <div id="creditsModal" class="fixed inset-0 z-[100001] bg-stone-950/95 flex items-center justify-center p-4 hidden backdrop-blur-sm">
+    <div id="creditsModal" class="fixed inset-0 z-[100000005] bg-stone-950/95 flex items-center justify-center p-4 hidden backdrop-blur-sm">
         <div class="w-full max-w-sm bg-stone-900 border-4 border-red-900 rounded-xl shadow-2xl p-7 flex flex-col items-center space-y-5 text-center">
 
             <!-- Stemma -->
@@ -1528,6 +1570,12 @@
             menuNewGameBtn: document.getElementById('menuNewGameBtn'),
             menuContinueBtn: document.getElementById('menuContinueBtn'),
             menuExitBtn: document.getElementById('menuExitBtn'),
+            pauseMenuScreen: document.getElementById('pauseMenuScreen'),
+            pauseResumeBtn: document.getElementById('pauseResumeBtn'),
+            pauseLoadBtn: document.getElementById('pauseLoadBtn'),
+            pauseTutorialBtn: document.getElementById('pauseTutorialBtn'),
+            pauseCreditsBtn: document.getElementById('pauseCreditsBtn'),
+            pauseExitBtn: document.getElementById('pauseExitBtn'),
             newspaperModal: document.getElementById('newspaperModal'),
             closeNewspaperBtn: document.getElementById('closeNewspaperBtn'),
             newsPaperDate: document.getElementById('newsPaperDate'),
@@ -3196,6 +3244,31 @@
             }
         }
 
+        function updatePauseMenu() {
+            const saved = loadGameData();
+            const hasSave = !!(saved && saved.day);
+            DOM.pauseLoadBtn.disabled = !hasSave;
+            if (hasSave) {
+                DOM.pauseLoadBtn.style.opacity = '1';
+                DOM.pauseLoadBtn.style.cursor = 'pointer';
+                DOM.pauseLoadBtn.innerHTML = `📁 CARICA PARTITA (GIORNO ${saved.day} • $${saved.credits})`;
+            } else {
+                DOM.pauseLoadBtn.style.opacity = '0.45';
+                DOM.pauseLoadBtn.style.cursor = 'not-allowed';
+                DOM.pauseLoadBtn.innerHTML = `📁 CARICA PARTITA (NESSUN SALVATAGGIO)`;
+            }
+        }
+
+        function openPauseMenu() {
+            if (!DOM.mainMenuScreen.classList.contains('hidden')) return;
+            updatePauseMenu();
+            DOM.pauseMenuScreen.classList.remove('hidden');
+        }
+
+        function closePauseMenu() {
+            DOM.pauseMenuScreen.classList.add('hidden');
+        }
+
         function startNewGame() {
             GAME_STATE.day = 1;
             GAME_STATE.credits = 20;
@@ -3332,10 +3405,7 @@
             };
 
             DOM.openMainMenuBtn.onclick = function() {
-                updateMenuButtons();
-                hideDocuments();
-                hideStamps();
-                DOM.mainMenuScreen.classList.remove('hidden');
+                openPauseMenu();
             };
 
             DOM.closeNewspaperBtn.onclick = function(e) {
@@ -3440,13 +3510,52 @@
             gid('volumeCloseBtn').onclick = closeVolume;
             gid('volumeDoneBtn').onclick = closeVolume;
             volPanel.addEventListener('click', (e) => { if (e.target === volPanel) closeVolume(); });
-            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeVolume(); });
 
             // Credits
             const creditsModal = gid('creditsModal');
             gid('menuCreditsBtn').onclick = () => creditsModal.classList.remove('hidden');
             gid('closeCreditsBtn').onclick = () => creditsModal.classList.add('hidden');
             creditsModal.addEventListener('click', (e) => { if (e.target === creditsModal) creditsModal.classList.add('hidden'); });
+
+            // Pause Menu Eventi
+            DOM.pauseResumeBtn.onclick = closePauseMenu;
+            DOM.pauseLoadBtn.onclick = function(e) {
+                e.preventDefault();
+                if (this.disabled) return;
+                closePauseMenu();
+                if (sounds.enabled) music.play();
+                continueGame();
+            };
+            DOM.pauseTutorialBtn.onclick = openTutorial;
+            DOM.pauseCreditsBtn.onclick = () => creditsModal.classList.remove('hidden');
+            DOM.pauseExitBtn.onclick = function() {
+                closePauseMenu();
+                DOM.newspaperModal.classList.add('hidden');
+                DOM.endOfDayModal.classList.add('hidden');
+                DOM.gameOverModal.classList.add('hidden');
+                hideDocuments();
+                hideStamps();
+                DOM.travelerContainer.classList.add('translate-y-full', 'opacity-0');
+                updateMenuButtons();
+                DOM.mainMenuScreen.classList.remove('hidden');
+            };
+            DOM.pauseMenuScreen.addEventListener('click', (e) => { if (e.target === DOM.pauseMenuScreen) closePauseMenu(); });
+
+            // Gestione tasto ESC (chiude i modali o alterna la pausa)
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (!volPanel.classList.contains('hidden')) { closeVolume(); return; }
+                    if (!creditsModal.classList.contains('hidden')) { creditsModal.classList.add('hidden'); return; }
+                    if (!tutModal.classList.contains('hidden')) { if (tutorialDone()) closeTutorial(); return; }
+                    if (!DOM.pauseMenuScreen.classList.contains('hidden')) { closePauseMenu(); return; }
+                    if (DOM.mainMenuScreen.classList.contains('hidden') &&
+                        DOM.newspaperModal.classList.contains('hidden') &&
+                        DOM.endOfDayModal.classList.contains('hidden') &&
+                        DOM.gameOverModal.classList.contains('hidden')) {
+                        openPauseMenu();
+                    }
+                }
+            });
 
             // Pulsante ESCI
             DOM.menuExitBtn.onclick = function(e) {
