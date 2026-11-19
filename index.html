@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="game-version" content="4.4.5">
+    <meta name="game-version" content="4.5">
     <script>
     // Bootstrap aggiornamenti (solo app desktop NW.js): se esiste una versione piu' recente scaricata, la usa al posto di questa.
     (function () {
@@ -977,6 +977,34 @@
 
     <!-- JAVASCRIPT GAME ENGINE -->
     <script>
+    (function () {
+        'use strict';
+
+        const _SAVE_SECRET = 'nv1840kp' + String.fromCharCode(107, 114, 97, 115);
+        function _hmac(data) {
+            let h = 0x811c9dc5;
+            const s = _SAVE_SECRET + data;
+            for (let i = 0; i < s.length; i++) {
+                h ^= s.charCodeAt(i);
+                h = Math.imul(h, 0x01000193);
+            }
+            return (h >>> 0).toString(36);
+        }
+
+        function escHtml(s) {
+            if (s === null || s === undefined) return '';
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        let _processingAction = false;
+        let _rAF_panorama = null;
+        let _rAF_sky = null;
+
         const APPROVED_NATIONS_AND_CITIES = {
             'Novograd': ['Krasnagrad', 'Mirny', 'Belograd', 'Zavod'],
             'Varna': ['Varna-City', 'Kirov', 'Borki', 'Reka'],
@@ -1308,7 +1336,7 @@
             const enc = pool[Math.floor(Math.random() * pool.length)];
             const wn = wantedNameSet();
             let name, tries = 0;
-            do { name = getRandomName(enc.gender); tries++; } while (wn.has(name) && tries < 20);
+            do { name = getRandomName(enc.gender); tries++; } while (wn.has(name) && tries < 100);
             const q = queue[idx];
             forceCleanTraveler(q, enc.gender, enc.seed, name);
             Object.assign(q, { encounter: enc, encounterDone: false, dialogue: enc.line });
@@ -1327,12 +1355,12 @@
             }
             const wn = wantedNameSet();
             let name, tries = 0;
-            do { name = getRandomName(DESERTER.gender); tries++; } while (wn.has(name) && tries < 20);
+            do { name = getRandomName(DESERTER.gender); tries++; } while (wn.has(name) && tries < 100);
             GAME_STATE.deserter = { name, gender: DESERTER.gender, seed: DESERTER.seed };
             const q = queue[idx];
             forceCleanTraveler(q, DESERTER.gender, DESERTER.seed, name);
             Object.assign(q, {
-                isDeserter: true, shouldApprove: false,
+                isDeserter: true, shouldApprove: false, mustArrest: true,
                 invalidReason: `DISERTORE: ${name} era il disertore dell'esercito (pag. 5), doveva essere arrestato!`,
                 dialogue: "Sono un semplice lavoratore, ispettore... ecco le mie carte. Ho fretta di passare."
             });
@@ -1532,7 +1560,20 @@
                     const buf = new Uint8Array(raw.length);
                     for (let i = 0; i < raw.length; i++) buf[i] = raw.charCodeAt(i);
                     src = URL.createObjectURL(new Blob([buf], { type: 'audio/mpeg' }));
-                } catch (e) {}
+                } catch (e) {
+                    if (typeof nw !== 'undefined') {
+                        try {
+                            const req = window.require || nw.require;
+                            const path = req('path');
+                            const fs = req('fs');
+                            const appDir = path.dirname(process.execPath);
+                            const abs = path.join(appDir, 'assets', 'audio', 'soundtrack.mp3');
+                            if (fs.existsSync(abs)) {
+                                src = 'file:///' + abs.replace(/\\/g, '/');
+                            }
+                        } catch (_) {}
+                    }
+                }
                 this.el = new Audio(src);
                 this.el.loop = true;
                 this.el.volume = audioSettings.musicLevel();
@@ -2184,7 +2225,7 @@
                     borderPanoramaCtx.fill();
                 }
 
-                requestAnimationFrame(renderTopPanoramas);
+                _rAF_panorama = requestAnimationFrame(renderTopPanoramas);
             }
 
             renderTopPanoramas();
@@ -2198,6 +2239,9 @@
             function resizeSky() {
                 canvas.width = canvas.parentElement.clientWidth;
                 canvas.height = canvas.parentElement.clientHeight;
+                if (snowParticles && snowParticles.length) {
+                    snowParticles.forEach(p => { p.x = Math.random() * (canvas.width || 400); });
+                }
             }
             resizeSky();
             window.addEventListener('resize', resizeSky);
@@ -2248,7 +2292,7 @@
                     if (p.y > h) p.y = -5;
                 });
 
-                requestAnimationFrame(renderSky);
+                _rAF_sky = requestAnimationFrame(renderSky);
             }
             renderSky();
         }
@@ -2458,6 +2502,19 @@
                     isDragging = false; activeId = null;
                     item.classList.remove('ring-2', 'ring-amber-500/50');
                     DOM.dropHighlight.classList.add('hidden');
+
+                    const desk = item.offsetParent || document.body;
+                    const maxW = desk.clientWidth || window.innerWidth;
+                    const maxH = desk.clientHeight || window.innerHeight;
+                    const itemW = item.offsetWidth || 150;
+                    const itemH = item.offsetHeight || 100;
+                    let curL = parseFloat(item.style.left) || item.offsetLeft;
+                    let curT = parseFloat(item.style.top) || item.offsetTop;
+                    curL = Math.max(10, Math.min(curL, maxW - itemW - 10));
+                    curT = Math.max(10, Math.min(curT, maxH - itemH - 10));
+                    item.style.left = `${curL}px`;
+                    item.style.top = `${curT}px`;
+
                     if (cancelled) return;
                     if (item === DOM.stampApproveBtn || item === DOM.stampDenyBtn) {
                         const stampType = item === DOM.stampApproveBtn ? 'APPROVED' : 'DENIED';
@@ -2637,7 +2694,7 @@
                 if (isWanted) name = target.name;
                 else {
                     let tries = 0;
-                    do { name = getRandomName(gender); tries++; } while (wantedNames.has(name) && tries < 20);
+                    do { name = getRandomName(gender); tries++; } while (wantedNames.has(name) && tries < 100);
                 }
 
                 let photoSeed = faceSeed;
@@ -2954,6 +3011,7 @@
         }
 
         function processDecision() {
+            if (_processingAction) return;
             if (!GAME_STATE.currentTraveler) return;
             if (encounterPending(GAME_STATE.currentTraveler)) return;
 
@@ -2962,6 +3020,7 @@
                 return;
             }
 
+            _processingAction = true;
             const t = GAME_STATE.currentTraveler;
             const isApproved = (GAME_STATE.passportDecision === 'APPROVED');
             trackEvent(t, isApproved ? 'approve' : 'deny');
@@ -3014,6 +3073,7 @@
 
             const maxTime = GAME_STATE.dayData.endMinutes;
             setTimeout(() => {
+                _processingAction = false;
                 if (GAME_STATE.travelerIndex >= currentQueue.length || GAME_STATE.timeMinutes >= maxTime) {
                     endOfDay();
                 }
@@ -3021,11 +3081,13 @@
         }
 
         function processArrest() {
+            if (_processingAction) return;
             if (!GAME_STATE.currentTraveler) return;
             if (encounterPending(GAME_STATE.currentTraveler)) return;
 
+            _processingAction = true;
             const t = GAME_STATE.currentTraveler;
-            const isJustified = !!(t.isWanted || t.photoSeed !== t.faceSeed || t.invalidReason || t.eventFlag === 'courier');
+            const isJustified = !!(t.isWanted || t.mustArrest || t.isDeserter || t.eventFlag === 'courier');
             trackEvent(t, 'arrest');
             if (t.eventFlag === 'favor') {
                 GAME_STATE.ministryTrust = clampStat(GAME_STATE.ministryTrust + 10);
@@ -3062,6 +3124,7 @@
 
                 const maxTime = GAME_STATE.dayData.endMinutes;
                 setTimeout(() => {
+                    _processingAction = false;
                     if (GAME_STATE.travelerIndex >= currentQueue.length || GAME_STATE.timeMinutes >= maxTime) {
                         endOfDay();
                     }
@@ -3277,22 +3340,55 @@
                     violations: GAME_STATE.violations,
                     ministryTrust: GAME_STATE.ministryTrust,
                     resistanceRep: GAME_STATE.resistanceRep,
-                    sonCured: GAME_STATE.sonCured,
-                    sonDead: GAME_STATE.sonDead,
+                    sonCured: !!GAME_STATE.sonCured,
+                    sonDead: !!GAME_STATE.sonDead,
                     sonUntreatedDays: GAME_STATE.sonUntreatedDays,
                     familyHealth: GAME_STATE.familyHealth,
                     lastEncDay: GAME_STATE.lastEncDay
                 };
-                localStorage.setItem('krasna_pass_save_v3.5', JSON.stringify(data));
+                const json = JSON.stringify(data);
+                const signed = JSON.stringify({ d: json, h: _hmac(json) });
+                localStorage.setItem('krasna_pass_save_v3.5', signed);
             } catch (e) {}
         }
 
         function loadGameData() {
             try {
-                const localData = localStorage.getItem('krasna_pass_save_v3.5');
-                if (localData) return JSON.parse(localData);
-            } catch (e) {}
-            return null;
+                const raw = localStorage.getItem('krasna_pass_save_v3.5');
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                let data = null;
+                if (parsed && typeof parsed === 'object') {
+                    if (typeof parsed.d === 'string' && typeof parsed.h === 'string') {
+                        if (_hmac(parsed.d) !== parsed.h) {
+                            console.warn('Integrità salvataggio compromessa: hash non valido.');
+                            return null;
+                        }
+                        data = JSON.parse(parsed.d);
+                    } else if (typeof parsed.day === 'number') {
+                        // Compatibilità retroattiva con formato non firmato
+                        data = parsed;
+                    }
+                }
+                if (!data) return null;
+
+                // Validazione rigorosa dei tipi e intervalli
+                if (typeof data.day !== 'number' || data.day < 1 || data.day > 21 || !Number.isFinite(data.day)) return null;
+                if (typeof data.credits !== 'number' || !Number.isFinite(data.credits)) return null;
+                if (typeof data.violations !== 'number' || !Number.isFinite(data.violations)) return null;
+                if (typeof data.ministryTrust !== 'number' || !Number.isFinite(data.ministryTrust)) return null;
+                if (typeof data.resistanceRep !== 'number' || !Number.isFinite(data.resistanceRep)) return null;
+                if (typeof data.familyHealth !== 'number' || !Number.isFinite(data.familyHealth)) return null;
+                data.credits = Math.max(0, Math.min(99999, Math.round(data.credits)));
+                data.violations = Math.max(0, Math.min(9999, Math.round(data.violations)));
+                data.ministryTrust = Math.max(0, Math.min(100, Math.round(data.ministryTrust)));
+                data.resistanceRep = Math.max(0, Math.min(100, Math.round(data.resistanceRep)));
+                data.familyHealth = Math.max(0, Math.min(100, Math.round(data.familyHealth)));
+
+                return data;
+            } catch (e) {
+                return null;
+            }
         }
 
         // ---------- TUTORIAL (obbligatorio la prima volta) ----------
@@ -3342,7 +3438,7 @@
             if (hasSave) {
                 DOM.menuContinueBtn.style.opacity = '1';
                 DOM.menuContinueBtn.style.cursor = 'pointer';
-                DOM.menuContinueBtn.innerHTML = `📁 CONTINUA PARTITA (GIORNO ${saved.day} • $${saved.credits})`;
+                DOM.menuContinueBtn.innerHTML = `📁 CONTINUA PARTITA (GIORNO ${escHtml(saved.day)} • $${escHtml(saved.credits)})`;
             } else {
                 DOM.menuContinueBtn.style.opacity = '0.45';
                 DOM.menuContinueBtn.style.cursor = 'not-allowed';
@@ -3373,7 +3469,7 @@
             if (hasSave) {
                 DOM.pauseLoadBtn.style.opacity = '1';
                 DOM.pauseLoadBtn.style.cursor = 'pointer';
-                DOM.pauseLoadBtn.innerHTML = `📁 CARICA PARTITA (GIORNO ${saved.day} • $${saved.credits})`;
+                DOM.pauseLoadBtn.innerHTML = `📁 CARICA PARTITA (GIORNO ${escHtml(saved.day)} • $${escHtml(saved.credits)})`;
             } else {
                 DOM.pauseLoadBtn.style.opacity = '0.45';
                 DOM.pauseLoadBtn.style.cursor = 'not-allowed';
@@ -3430,6 +3526,7 @@
         }
 
         function startDay(dayNumber) {
+            topZIndex = 99999999;
             if (dayNumber > 20) {
                 triggerBranchingEnding();
                 return;
@@ -3664,8 +3761,14 @@
             };
             DOM.pauseMenuScreen.addEventListener('click', (e) => { if (e.target === DOM.pauseMenuScreen) closePauseMenu(); });
 
-            // Gestione tasto ESC (chiude i modali o alterna la pausa)
+            // Gestione tasti: protezione DevTools ed ESC per pausa/modali
             document.addEventListener('keydown', (e) => {
+                if (e.key === 'F12' ||
+                    ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c'))) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
                 if (e.key === 'Escape') {
                     if (!volPanel.classList.contains('hidden')) { closeVolume(); return; }
                     if (!creditsModal.classList.contains('hidden')) { creditsModal.classList.add('hidden'); return; }
@@ -3708,6 +3811,7 @@
         }
 
         window.addEventListener('load', initGame);
+    })();
     </script>
 </body>
 </html>

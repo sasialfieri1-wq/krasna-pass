@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Ispettore di Confine: Krasna Pass 1840",
   "main": "index.html",
+  "chromium-args": "--disable-devtools",
   "window": {
     "title": "Ispettore di Confine: Krasna Pass 1840",
     "icon": "assets/icon.png",
