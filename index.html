@@ -6,27 +6,53 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="game-version" content="4.4.3">
+    <meta name="game-version" content="4.4.5">
     <script>
     // Bootstrap aggiornamenti (solo app desktop NW.js): se esiste una versione piu' recente scaricata, la usa al posto di questa.
     (function () {
-        if (window.__krasnaOverride || typeof nw === 'undefined') return;
+        if (typeof nw === 'undefined') return;
         try {
             var req = window.require || nw.require;
+            if (!req || !nw.App || !nw.App.dataPath) return;
             var fs = req('fs'), path = req('path');
             var dir = path.join(nw.App.dataPath, 'game_update');
-            var meta = JSON.parse(fs.readFileSync(path.join(dir, 'meta.json'), 'utf8'));
-            var mine = document.querySelector('meta[name="game-version"]').content;
-            var a = String(meta.version).split('.').map(Number), b = String(mine).split('.').map(Number), newer = false;
+            var metaFile = path.join(dir, 'meta.json');
+            var updateFile = path.join(dir, 'index.html');
+            if (!fs.existsSync(metaFile) || !fs.existsSync(updateFile)) return;
+
+            var meta = JSON.parse(fs.readFileSync(metaFile, 'utf8'));
+            var metaTag = document.querySelector('meta[name="game-version"]');
+            var mine = metaTag ? metaTag.content : '0.0.0';
+
+            var a = String(meta.version).split('.').map(Number);
+            var b = String(mine).split('.').map(Number);
+            var newer = false;
             for (var i = 0; i < Math.max(a.length, b.length); i++) {
                 var d = (a[i] || 0) - (b[i] || 0);
                 if (d) { newer = d > 0; break; }
             }
             if (!newer) return;
-            var html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
-            if (!html || html.length < 50000) return;
-            window.__krasnaOverride = true;
-            document.open(); document.write(html); document.close();
+
+            // il file scaricato deve davvero contenere la versione dichiarata (niente redirect su file corrotti/vecchi)
+            var html = fs.readFileSync(updateFile, 'utf8');
+            if (html.indexOf('name="game-version" content="' + meta.version + '"') < 0) return;
+
+            var targetUrl;
+            try { targetUrl = req('url').pathToFileURL(updateFile).href; }
+            catch (e) { targetUrl = encodeURI('file:///' + updateFile.replace(/\\/g, '/').replace(/^\/+/, '')); }
+
+            var here = window.location.href.split('#')[0].split('?')[0];
+            var same = false;
+            try { same = decodeURIComponent(here).toLowerCase() === decodeURIComponent(targetUrl).toLowerCase(); } catch (e) {}
+            if (same) return;
+
+            // anti-loop: un solo redirect per versione e per sessione
+            try {
+                if (sessionStorage.getItem('kp_update_redirect') === String(meta.version)) return;
+                sessionStorage.setItem('kp_update_redirect', String(meta.version));
+            } catch (e) {}
+
+            window.location.replace(targetUrl);
         } catch (e) {}
     })();
     </script>
@@ -2234,10 +2260,10 @@
             const tag = document.getElementById('versionTag');
             if (tag) tag.textContent = GAME_VERSION;
             if (typeof nw === 'undefined') return;   // il browser si aggiorna da solo: serve solo nell'app
-            let https, fs, path;
+            let https, fs, path, urlMod;
             try {
                 const req = window.require || nw.require;
-                https = req('https'); fs = req('fs'); path = req('path');
+                https = req('https'); fs = req('fs'); path = req('path'); urlMod = req('url');
             } catch (e) { return; }
 
             const INFO_URL = 'https://sasialfieri1-wq.github.io/krasna-pass/version.json';
@@ -2303,8 +2329,24 @@
             }
             window.__updateBannerRefresh = render;
 
+            // Apre direttamente la versione scaricata (non dipende dal bootstrap del pacchetto installato)
+            function applyUpdate() {
+                let target = null;
+                try {
+                    const file = path.join(nw.App.dataPath, 'game_update', 'index.html');
+                    target = urlMod.pathToFileURL(file).href;
+                } catch (e) {}
+                if (!target) { location.reload(); return; }
+                try { sessionStorage.setItem('kp_update_redirect', String(pending.version)); } catch (e) {}
+                location.replace(target);
+                // rete di sicurezza: se dopo 2s siamo ancora qui, ricarica forzando la cache
+                setTimeout(() => {
+                    try { nw.Window.get().reloadIgnoringCache(); } catch (e) { location.reload(); }
+                }, 2000);
+            }
+
             nowBtn.onclick = () => {
-                if (stage === 'ready') { location.reload(); return; }
+                if (stage === 'ready') { applyUpdate(); return; }
                 if (stage === 'downloading') return;
                 stage = 'downloading';
                 render();
@@ -2315,8 +2357,11 @@
                     try {
                         const dir = path.join(nw.App.dataPath, 'game_update');
                         fs.mkdirSync(dir, { recursive: true });
-                        fs.writeFileSync(path.join(dir, 'index.html'), html, 'utf8');
-                        fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify({ version: pending.version }), 'utf8');
+                        const tmpHtml = path.join(dir, 'index.html.tmp'), tmpMeta = path.join(dir, 'meta.json.tmp');
+                        fs.writeFileSync(tmpHtml, html, 'utf8');
+                        fs.writeFileSync(tmpMeta, JSON.stringify({ version: pending.version }), 'utf8');
+                        fs.renameSync(tmpHtml, path.join(dir, 'index.html'));
+                        fs.renameSync(tmpMeta, path.join(dir, 'meta.json'));
                         stage = 'ready';
                     } catch (e) { stage = 'error'; }
                     render();
