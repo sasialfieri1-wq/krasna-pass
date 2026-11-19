@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="game-version" content="4.5">
+    <meta name="game-version" content="4.5.1">
     <script>
     // Bootstrap aggiornamenti (solo app desktop NW.js): se esiste una versione piu' recente scaricata, la usa al posto di questa.
     (function () {
@@ -1001,6 +1001,58 @@
                 .replace(/'/g, '&#39;');
         }
 
+        const storage = {
+            _getFs() {
+                if (typeof nw !== 'undefined' && nw.App && nw.App.dataPath) {
+                    try {
+                        const req = window.require || nw.require;
+                        if (req) return { fs: req('fs'), path: req('path'), dir: nw.App.dataPath };
+                    } catch (_) {}
+                }
+                return null;
+            },
+            get(key) {
+                const n = this._getFs();
+                if (n) {
+                    try {
+                        const file = n.path.join(n.dir, key + '.json');
+                        if (n.fs.existsSync(file)) {
+                            return n.fs.readFileSync(file, 'utf8');
+                        }
+                    } catch (_) {}
+                }
+                try {
+                    return localStorage.getItem(key);
+                } catch (_) {
+                    return null;
+                }
+            },
+            set(key, val) {
+                try {
+                    localStorage.setItem(key, String(val));
+                } catch (_) {}
+                const n = this._getFs();
+                if (n) {
+                    try {
+                        const file = n.path.join(n.dir, key + '.json');
+                        n.fs.writeFileSync(file, String(val), 'utf8');
+                    } catch (_) {}
+                }
+            },
+            remove(key) {
+                try {
+                    localStorage.removeItem(key);
+                } catch (_) {}
+                const n = this._getFs();
+                if (n) {
+                    try {
+                        const file = n.path.join(n.dir, key + '.json');
+                        if (n.fs.existsSync(file)) n.fs.unlinkSync(file);
+                    } catch (_) {}
+                }
+            }
+        };
+
         let _processingAction = false;
         let _rAF_panorama = null;
         let _rAF_sky = null;
@@ -1532,14 +1584,15 @@
             master: 100, music: 35, sfx: 100,
             load() {
                 try {
-                    const v = JSON.parse(localStorage.getItem('krasna_pass_volumes') || 'null');
+                    const raw = storage.get('krasna_pass_volumes');
+                    const v = raw ? JSON.parse(raw) : null;
                     if (v) ['master', 'music', 'sfx'].forEach(k => {
                         if (typeof v[k] === 'number') this[k] = Math.max(0, Math.min(100, v[k]));
                     });
                 } catch (e) {}
             },
             save() {
-                try { localStorage.setItem('krasna_pass_volumes', JSON.stringify({ master: this.master, music: this.music, sfx: this.sfx })); } catch (e) {}
+                try { storage.set('krasna_pass_volumes', JSON.stringify({ master: this.master, music: this.music, sfx: this.sfx })); } catch (e) {}
             },
             musicLevel() { return (this.master / 100) * (this.music / 100); },
             sfxLevel() { return (this.master / 100) * (this.sfx / 100); },
@@ -3253,7 +3306,7 @@
 
         function triggerFamilyDeathEnding() {
             DOM.endOfDayModal.classList.add('hidden');
-            try { localStorage.removeItem('krasna_pass_save_v3.5'); } catch (e) {}
+            storage.remove('krasna_pass_save_v3.5');
             DOM.gameOverTitle.textContent = "FINALE 5: NEGLIGENZA DI CURE";
             DOM.gameOverReason.textContent = GAME_STATE.sonDead
                 ? "Dopo la morte di tuo figlio hai continuato a trascurare la casa: niente cibo, niente carbone. I vicini, allarmati dal silenzio, hanno avvisato il medico del quartiere operaio, lo stesso che aveva segnalato la malattia del bambino e chiesto invano le medicine. Nell'alloggio statale, gelido e senza provviste, non c'era più nessuno in vita. L'Ispettorato per il Decoro Familiare ha aperto un'inchiesta e, al valico, una vettura del Ministero ti ha atteso a fine turno: sei stato arrestato per negligenza di cure. Per il regime sei un funzionario che ha lasciato morire i propri cari mentre incassava lo stipendio."
@@ -3348,13 +3401,13 @@
                 };
                 const json = JSON.stringify(data);
                 const signed = JSON.stringify({ d: json, h: _hmac(json) });
-                localStorage.setItem('krasna_pass_save_v3.5', signed);
+                storage.set('krasna_pass_save_v3.5', signed);
             } catch (e) {}
         }
 
         function loadGameData() {
             try {
-                const raw = localStorage.getItem('krasna_pass_save_v3.5');
+                const raw = storage.get('krasna_pass_save_v3.5');
                 if (!raw) return null;
                 const parsed = JSON.parse(raw);
                 let data = null;
@@ -3395,12 +3448,12 @@
         const TUTORIAL_KEY = 'krasna_pass_tutorial_done';
         let tutorialDoneMemory = false; // ripiego se il browser blocca localStorage
         function tutorialDone() {
-            try { if (localStorage.getItem(TUTORIAL_KEY) === '1') return true; } catch (e) {}
+            try { if (storage.get(TUTORIAL_KEY) === '1') return true; } catch (e) {}
             return tutorialDoneMemory;
         }
         function markTutorialDone() {
             tutorialDoneMemory = true;
-            try { localStorage.setItem(TUTORIAL_KEY, '1'); } catch (e) {}
+            try { storage.set(TUTORIAL_KEY, '1'); } catch (e) {}
         }
         const TUTORIAL_STEPS = [
             {
@@ -3694,7 +3747,7 @@
             };
 
             gid('exitToMenuBtn').onclick = () => {
-                try { localStorage.removeItem('krasna_pass_save_v3.5'); } catch (e) {}
+                storage.remove('krasna_pass_save_v3.5');
                 DOM.gameOverModal.classList.add('hidden');
                 DOM.endOfDayModal.classList.add('hidden');
                 DOM.newspaperModal.classList.add('hidden');
