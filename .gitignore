@@ -2,6 +2,7 @@
 *
 !.gitignore
 !index.html
+!package.json
 !version.json
 !assets/
 !assets/**
